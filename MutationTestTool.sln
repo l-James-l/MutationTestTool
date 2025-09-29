@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36511.14 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mutator", "Mutator\Mutator.csproj", "{AD623C0D-196C-4389-9F9B-04BBAB61962D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MutatatorTests", "MutatatorTests\MutatatorTests.csproj", "{D3CB8735-864C-4110-9931-CDEF99FC45C9}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{AD623C0D-196C-4389-9F9B-04BBAB61962D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AD623C0D-196C-4389-9F9B-04BBAB61962D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AD623C0D-196C-4389-9F9B-04BBAB61962D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AD623C0D-196C-4389-9F9B-04BBAB61962D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D3CB8735-864C-4110-9931-CDEF99FC45C9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D3CB8735-864C-4110-9931-CDEF99FC45C9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D3CB8735-864C-4110-9931-CDEF99FC45C9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D3CB8735-864C-4110-9931-CDEF99FC45C9}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {4998069E-100D-48FB-BC54-DBF5BC1358F3}
+	EndGlobalSection
+EndGlobal
