@@ -8,5 +8,7 @@
         //  Calling the class that will handle initating the process of mutation testing
 
         Console.WriteLine("Hello world");
+
+        //bogus change to test git diffs
     }
 }
