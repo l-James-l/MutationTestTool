@@ -9,10 +9,11 @@
 
   <ItemGroup>
     <PackageReference Include="Buildalyzer" Version="7.1.0" />
-    <PackageReference Include="Microsoft.Build.Locator" Version="1.10.2" />
+    <PackageReference Include="Buildalyzer.Workspaces" Version="7.1.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.14.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.14.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="4.14.0" />
+    <PackageReference Include="Microsoft.TestPlatform.ObjectModel" Version="18.0.0" />
   </ItemGroup>
 
 </Project>

@@ -1,10 +1,19 @@
 ﻿using Buildalyzer;
-using Microsoft.Build.Locator;
+using Buildalyzer.Environment;
+using Buildalyzer.Workspaces;
+using Microsoft.Build.Execution;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Emit;
 using Microsoft.CodeAnalysis.MSBuild;
+using Microsoft.CSharp;
 using Microsoft.Extensions.Options;
+using System.CodeDom.Compiler;
+using System.Collections.Immutable;
+using System.Diagnostics;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 
 
@@ -45,16 +54,33 @@ public class LoadingSyntaxTreePrototype
         }
     }
 
-    public void LoadSlnUsingBuildAnalyzer()
+    public void LoadSlnUsingBuildAnalyzer() 
     {
         string targetPath = @"C:\Users\THINKPAD\Documents\git\SimpleTestProject\SimpleTestProject.sln";
 
         AnalyzerManager analyzerManager = new AnalyzerManager(targetPath);
+        AdhocWorkspace slnWorkspace = analyzerManager.GetWorkspace();
 
         Console.WriteLine($"Solution loaded: {analyzerManager.SolutionFilePath}");
-        foreach ((string id, IProjectAnalyzer analyzer) in analyzerManager.Projects.ToList()[..1])
+
+        //foreach (Project project in slnWorkspace.CurrentSolution.Projects)
+        //{
+        //    Console.WriteLine("Creating initial build for " + project.AssemblyName);
+        //    //BuildProject(project);
+        //    BuildProjsingInbuildCompiler(project);
+        //}
+
+        RunInitialBuild(analyzerManager);
+
+        foreach ((string id, IProjectAnalyzer analyzer) in analyzerManager.Projects.ToList())
         {
-            Console.WriteLine(analyzer.ProjectInSolution.ProjectName);
+            if (analyzer.ProjectInSolution.ProjectName != "Project")
+            {
+                Console.WriteLine("Skipping: " + analyzer.ProjectInSolution.ProjectName);
+                //analyzer.Build();  -- this will delete the dll that we just built in the initial build step
+                continue;
+            }
+            Console.WriteLine("Ananlyzing: " + analyzer.ProjectInSolution.ProjectName);
 
             string projectDirPath = id.Remove(id.Count() - analyzer.ProjectFile.Name.Count());
 
@@ -76,8 +102,86 @@ public class LoadingSyntaxTreePrototype
                 x.root = x.root.ReplaceNode(oldNode, newNode);
             }
 
-            Console.WriteLine(x.root.ToFullString());
+            DocumentId documentId = slnWorkspace.CurrentSolution.GetDocumentIdsWithFilePath(files[0]).First();
+            Solution solution = slnWorkspace.CurrentSolution.WithDocumentSyntaxRoot(documentId, x.root);
+            Project project = solution.Projects.FirstOrDefault(x => x.Name == analyzer.ProjectInSolution.ProjectName) ?? throw new Exception();
+            slnWorkspace.TryApplyChanges(solution);
+
+            //CSharpCompilation.Create(AssemblyName,
+            //syntaxTrees.ToList(),
+            //_input.SourceProjectInfo.AnalyzerResult.LoadReferences(),
+            //analyzerResult.GetCompilationOptions());
+
+            //CSharpGeneratorDriver.Create().RunGeneratorsAndUpdateCompilation(
+            //    projWorkspace.CurrentSolution.GetProject(documentId.ProjectId)!.GetCompilationAsync().Result as CSharpCompilation ?? throw new Exception(),
+            //    ImmutableArray.Create<CSharpSourceGenerator>(new CSharpMutationGenerator()),
+            //    out CSharpCompilation updatedCompilation);  
+            //analyzer.add(projWorkspace);
+            //IAnalyzerResults analyzerResults = analyzer.Build();
+
+            //AnalyzerResult analyzerResult = analyzerResults.First() as AnalyzerResult ?? throw new Exception();
+            //analyzerResult.AdditionalFiles.ToList();
+            //Console.WriteLine(x.root.ToFullString());
+
+            //analyzer.Build(); //--this will delete the dll that we just built in the initial build step
+
+            BuildProject(project);
         }
+
+        //foreach (ProjectId projectId in slnWorkspace.CurrentSolution.ProjectIds)
+        //{
+        //    Task.Run(() => BuildProject(slnWorkspace, projectId));
+        //}
+        //foreach (Project project in slnWorkspace.CurrentSolution.Projects)
+        //{
+        //    //BuildProject(project);
+        //    BuildProjsingInbuildCompiler(project);
+        //}
+
+        //Parallel.ForEach(slnWorkspace.CurrentSolution.Projects, async project =>
+        //{
+        //    BuildProject(project);
+        //});
+    }
+
+    private void BuildProject(Project project)
+    {
+        try
+        {
+            Console.WriteLine($"Attempting compilation for {project.Name}");
+
+            Compilation? compilation = project.GetCompilationAsync().GetAwaiter().GetResult();
+            if (compilation == null)
+            {
+                throw new Exception($"Compilation could not be created for project {project.Name}.");
+            }
+
+            Console.WriteLine($"Compilation created for project {project.Name}.");
+
+            string path = project.OutputFilePath ?? throw new Exception("Output file path is null.");
+            string folderPath = path.Substring(0, path.LastIndexOf(Path.DirectorySeparatorChar));
+            string fileName = path.Substring(path.LastIndexOf(Path.DirectorySeparatorChar) + 1);
+            //folderPath = Path.Combine(folderPath, "DarwingMutatedBuild");
+            if (!Directory.Exists(folderPath))
+            {
+                Directory.CreateDirectory(folderPath);
+            }
+
+            EmitResult emitResult = compilation.Emit(Path.Combine(folderPath, fileName));
+
+            if (!emitResult.Success) 
+            {
+                throw new Exception($"Compilation failed for project {project.Name}. {emitResult.Diagnostics}");
+            }
+
+            Console.WriteLine($"Compilation completion status: {(emitResult.Success ? "Success" : "Failure")}");
+
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error during compilation emit: {ex.Message}", ex);
+        }
+        Console.WriteLine($"Finished compilation attempt for project {project.Name}.");
     }
 
     private void TraverseSyntaxNode(SyntaxNode node)
@@ -88,12 +192,12 @@ public class LoadingSyntaxTreePrototype
             {
                 if (child is MethodDeclarationSyntax methodNode)
                 {
-                    Console.WriteLine($"Method: {methodNode.Identifier}");
+                    //Console.WriteLine($"Method: {methodNode.Identifier}");
                 }
                 else if (child.IsKind(SyntaxKind.SubtractExpression) && 
                     child is BinaryExpressionSyntax binaryExp)
                 {
-                    Console.WriteLine($"Subtract Node Kind Type: {child.GetType()}");
+                    //Console.WriteLine($"Subtract Node Kind Type: {child.GetType()}");
 
                     BinaryExpressionSyntax newSyntaxNode = SyntaxFactory.BinaryExpression(SyntaxKind.AddExpression,
                         binaryExp.Left,
@@ -104,13 +208,13 @@ public class LoadingSyntaxTreePrototype
                 }
                 else
                 {
-                    Console.WriteLine($"Node: {child.Kind()}");
+                    //Console.WriteLine($"Node: {child.Kind()}");
                 }
                 TraverseSyntaxNode(child);
             }
             else
             {
-                Console.WriteLine($"Leaf Node: {child.Kind()} - {child.ToFullString().Trim()}");
+                //Console.WriteLine($"Leaf Node: {child.Kind()} - {child.ToFullString().Trim()}");
             }
         }
     }
@@ -163,5 +267,125 @@ public class LoadingSyntaxTreePrototype
                 // Handle other kinds
                 break;
         }
+    }
+
+    public void RunTestsCmd()
+    {
+        // dotnet test "C:\Users\THINKPAD\Documents\git\SimpleTestProject\SimpleTestProject.sln" --logger "trx;LogFileName=test_results.trx"
+        Console.WriteLine("Running tests via command line...");
+
+        var proc = new Process
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                FileName = "dotnet",
+                Arguments = "test \"C:\\Users\\THINKPAD\\Documents\\git\\SimpleTestProject\\SimpleTestProject.sln\" --no-build -c \"Debug\"",
+                CreateNoWindow = true,
+                RedirectStandardError = true,
+                RedirectStandardOutput = true,
+
+            }
+        };
+        proc.Start();
+        while (!proc.HasExited)
+        {
+            if (!proc.StandardOutput.EndOfStream)
+            {
+                string line = proc.StandardOutput.ReadLine();
+                Console.WriteLine(line);
+            }
+        }
+        
+        proc.WaitForExit();
+        while(proc.StandardError.ReadLine() is { } error)
+        {
+            Console.WriteLine($"Error encountered: {error}");
+        }
+        
+        Console.WriteLine("Tests completed.");
+    }
+
+    public void RunInitialBuild(AnalyzerManager analyzerManager)
+    {
+        Console.WriteLine("Performing initial build");
+
+        foreach (var proj in analyzerManager.Projects)
+        {
+            Console.WriteLine("Building project: " + proj.Value.ProjectInSolution.ProjectName);
+            string path = proj.Value.ProjectFile.Path;
+
+            var cleaningProcess = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "dotnet",
+                    Arguments = $"clean {path}",
+                }
+            };
+            cleaningProcess.Start();
+            cleaningProcess.WaitForExit();
+
+            var buildingProcess = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "dotnet",
+                    Arguments = $"build {Path.GetFileName(path)}",
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    WorkingDirectory = Path.GetDirectoryName(path)
+                }
+            };
+            buildingProcess.Start();
+
+            while (buildingProcess.StandardOutput.ReadLine() is { } output)
+            {
+                Console.WriteLine($"{output}");
+            }
+
+            buildingProcess.WaitForExit();
+            while (buildingProcess.StandardError.ReadLine() is { } error)
+            {
+                Console.WriteLine($"Error encountered during initial build: {error}");
+            }
+            if (buildingProcess.ExitCode == 0)
+            {
+                Console.WriteLine($"Initial build succeeded for project: {proj.Value.ProjectInSolution.ProjectName}");
+            }
+            else
+            {
+                Console.WriteLine($"Initial build failed for project: {proj.Value.ProjectInSolution.ProjectName} with exit code {buildingProcess.ExitCode}");
+            }
+        }
+        
+        
+        Console.WriteLine("Initial build complete completed.");
+    }
+
+    public void RunCli()
+    {
+        //dotnet CLI/ bin\Debug\net8.0\CLI.dll
+
+        var proc = new Process
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                FileName = "dotnet",
+                Arguments = @"CLI\bin\Debug\net8.0\CLI.dll",
+            }
+        };
+        proc.Start();
+
+    }
+
+    public void BuildProjsingInbuildCompiler(Project proj)
+    {
+        CSharpCodeProvider codeProvider = new CSharpCodeProvider();
+
+        CompilerParameters parameters = new CompilerParameters();
+        parameters.GenerateExecutable = false;
+        parameters.OutputAssembly = proj.OutputFilePath;
+        //CompilerResults results = codeProvider.CreateCompiler().(parameters, proj.FilePath);
     }
 }
