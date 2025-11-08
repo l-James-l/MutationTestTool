@@ -1,4 +1,6 @@
-﻿
+﻿using Core.Startup;
+using Core;
+using Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
 /// Main entry point for the CLI application.
@@ -7,6 +9,12 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        Console.WriteLine("Hello, World!");
+        //Create a new container to pass to the DependencyRegistrar
+
+        ServiceCollection services = new();
+        new DependencyRegistrar(services);        
+
+        ServiceProvider serviceProvider = services.BuildServiceProvider();
+        Console.WriteLine(serviceProvider.GetService<ISolutionPathProvidedAwaiter>()?.NotifySolutionPathProvided("path/to/solution.sln"));
     }
 }

@@ -1,9 +1,21 @@
-﻿namespace Core.Startup;
+﻿using Microsoft.Extensions.DependencyInjection;
 
-public class DependencyRegistrar
+namespace Core.Startup;
+
+public class DependencyRegistrar: IDependencyRegistrar
 {
-    public DependencyRegistrar()
+    private IServiceCollection _services;
+
+    public DependencyRegistrar(IServiceCollection services)
     {
-        
+        _services = services;
+
+        RegisterDependencies();
+    }
+
+    private void RegisterDependencies()
+    {
+        _services.AddSingleton<IEventAggregator, EventAggregator>();
+        _services.AddSingleton<ISolutionPathProvidedAwaiter, SolutionPathProvidedAwaiter>();
     }
 }
