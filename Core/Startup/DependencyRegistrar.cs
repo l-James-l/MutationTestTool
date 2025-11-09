@@ -18,6 +18,7 @@ public class DependencyRegistrar
 
         _serviceProvider = _services.BuildServiceProvider();
 
+        //Get the logger configuration to ensure it's created at startup, thus logging is available immediately.
         _serviceProvider.GetService<EstablishLoggerConfiguration>();
     }
 

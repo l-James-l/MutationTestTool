@@ -2,6 +2,11 @@
 
 namespace CoreTests.Startup;
 
+/// <summary>
+/// Class to establish the logger.
+/// Log messages are written to both console and a file in Logs directory.
+/// Log dirrectories are located in the current working directory, e.g., the CLI or GUI bin folder.
+/// </summary>
 public class EstablishLoggerConfiguration
 {
     public EstablishLoggerConfiguration()

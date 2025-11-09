@@ -6,6 +6,8 @@ public class SolutionPathProvidedAwaiter: ISolutionPathProvidedAwaiter
 
     public SolutionPathProvidedAwaiter(IEventAggregator eventAggregator)
     {
+        ArgumentNullException.ThrowIfNull(eventAggregator);
+
         Console.WriteLine("SolutionPathProvidedAwaiter created.");
         
         _eventAggregator = eventAggregator;
