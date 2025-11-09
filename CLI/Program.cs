@@ -11,10 +11,6 @@ public class Program
     {
         //Create a new container to pass to the DependencyRegistrar
 
-        ServiceCollection services = new();
-        new DependencyRegistrar(services);        
-
-        ServiceProvider serviceProvider = services.BuildServiceProvider();
-        Console.WriteLine(serviceProvider.GetService<ISolutionPathProvidedAwaiter>()?.NotifySolutionPathProvided("path/to/solution.sln"));
+        new DependencyRegistrar(new ServiceCollection());        
     }
 }

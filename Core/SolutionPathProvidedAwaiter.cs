@@ -1,11 +1,5 @@
 ﻿namespace Core;
 
-
-public interface ISolutionPathProvidedAwaiter
-{
-    string NotifySolutionPathProvided(string path);
-}
-
 public class SolutionPathProvidedAwaiter: ISolutionPathProvidedAwaiter
 {
     private readonly IEventAggregator _eventAggregator;

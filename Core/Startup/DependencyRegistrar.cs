@@ -1,21 +1,30 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using CoreTests.Startup;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Core.Startup;
 
-public class DependencyRegistrar: IDependencyRegistrar
+public class DependencyRegistrar
 {
-    private IServiceCollection _services;
+    private readonly IServiceCollection _services;
+    private readonly ServiceProvider _serviceProvider;
 
-    public DependencyRegistrar(IServiceCollection services)
+    public DependencyRegistrar(IServiceCollection serviceCollection)
     {
-        _services = services;
+        ArgumentNullException.ThrowIfNull(serviceCollection);
+
+        _services = serviceCollection;
 
         RegisterDependencies();
+
+        _serviceProvider = _services.BuildServiceProvider();
+
+        _serviceProvider.GetService<EstablishLoggerConfiguration>();
     }
 
     private void RegisterDependencies()
     {
         _services.AddSingleton<IEventAggregator, EventAggregator>();
+        _services.AddSingleton<EstablishLoggerConfiguration>();
         _services.AddSingleton<ISolutionPathProvidedAwaiter, SolutionPathProvidedAwaiter>();
     }
 }
