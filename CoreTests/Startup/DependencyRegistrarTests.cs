@@ -1,7 +1,9 @@
-﻿using Core;
+﻿using CLI;
+using Core;
 using Core.IndustrialEstate;
 using Core.Startup;
 using Microsoft.Extensions.DependencyInjection;
+using Models;
 using NSubstitute;
 
 namespace CoreTests.Startup;
@@ -30,6 +32,8 @@ internal class DependencyRegistrarTests
         AssertBasicRegistartion<EstablishLoggerConfiguration>();
         AssertBasicRegistartion<IAnalyzerManagerFactory, AnalyzerManagerFactory>();
         AssertBasicRegistartion<IEventAggregator, EventAggregator>();
+        AssertBasicRegistartion<IMutationSettings, MutationSettings>();
+        AssertBasicRegistartion<IStartUpProcess, SolutionProfileDeserializer>();
     }
 
     [Test]
@@ -57,7 +61,7 @@ internal class DependencyRegistrarTests
 
     private void AssertRegisterManySingleton<T>(Type[] baseTypes)
     {
-        AssertBasicRegistartion<T, T>();
+        AssertBasicRegistartion<T>();
         foreach (Type type in baseTypes)
         {
             _services.Received(1).Add(Arg.Is<ServiceDescriptor>(x =>
