@@ -19,7 +19,7 @@ public class CLIApp
     private readonly IMutationSettings _mutationSettings;
     private readonly ISolutionProvider _solutionProvider;
     private readonly IWasBuildSuccessfull _buildSuccess;
-    private readonly CancellationTokenSource _cancelationToken;
+    private readonly ICancellationTokenWrapper _cancelationToken;
 
     public CLIApp(IEventAggregator eventAggregator, IMutationSettings mutationSettings, ISolutionProvider solutionProvider,
         ICancelationTokenFactory cancelationTokenFactory, IWasBuildSuccessfull buildSuccess)
@@ -41,7 +41,7 @@ public class CLIApp
 
         _mutationSettings.ParseCliArgs(args);
 
-        if (_mutationSettings.SolutionPath != null)
+        if (!string.IsNullOrWhiteSpace(_mutationSettings.SolutionPath))
         {
             // If sln specified in command line, load it. Dont care about response here as not possible to get one.
             SolutionLoaderCommand([_mutationSettings.SolutionPath], out _);
@@ -53,8 +53,10 @@ public class CLIApp
     private void MainLoop()
     {
         //Using the DI'd cancelation token allows the process to be cancelled from unit tests.
-        while (!_cancelationToken.IsCancellationRequested)
+        while (!_cancelationToken.IsCancelled())
         {
+            Console.Write("\nDarwing > ");
+
             // Command should be of format "--type param1 param2...".
             // Should not be multiple on a single line.
             string command = Console.ReadLine() ?? "";
@@ -135,7 +137,7 @@ public class CLIApp
         response = null;
         if (_solutionProvider.IsAvailable)
         {
-            _eventAggregator.GetEvent<RequestSolutionBuildEvent>().Publish(_solutionProvider.SolutionContiner);
+            _eventAggregator.GetEvent<RequestSolutionBuildEvent>().Publish();
         }
         else
         {

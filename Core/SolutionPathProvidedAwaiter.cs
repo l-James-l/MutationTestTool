@@ -77,7 +77,7 @@ public class SolutionPathProvidedAwaiter : IStartUpProcess, ISolutionProvider
             //Deserializer shall handle its own exceptions.
             _slnProfileDeserializer.LoadSlnProfileIfPresent(payload.SolutionPath);
             _solutionContainer.FindTestProjects(_mutationSettings);
-            _eventAggregator.GetEvent<RequestSolutionBuildEvent>().Publish(_solutionContainer);
+            _eventAggregator.GetEvent<RequestSolutionBuildEvent>().Publish();
         }
     }
 }

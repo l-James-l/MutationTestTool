@@ -43,9 +43,7 @@ public class SolutionPathProvidedAwaiterTests
     public void WhenOnSolutionPathProvidedWithValidPath_ThenCreateSolutionContainer()
     {
         // Arrange
-        var mockAnalyzerManager = Substitute.For<IAnalyzerManager>();
-
-        _analyzerManagerFactory.CreateAnalyzerManager(Arg.Any<string>()).Returns(mockAnalyzerManager);
+        _analyzerManagerFactory.CreateAnalyzerManager(Arg.Any<string>()).Returns(Substitute.For<IAnalyzerManager>());
         _awaiter.StartUp();
 
         //TODO this would fail on a build server
@@ -56,7 +54,7 @@ public class SolutionPathProvidedAwaiterTests
 
         // Assert
         _analyzerManagerFactory.Received(1).CreateAnalyzerManager(Arg.Is<string>(x => x == SolutionPath));
-        _requestSolutionBuild.Received(1).Publish(Arg.Is<SolutionContainer>(x => x.AnalyzerManager == mockAnalyzerManager));
+        _requestSolutionBuild.Received(1).Publish();
         _slnProfileDeserializer.Received(1).LoadSlnProfileIfPresent(SolutionPath);
     }
 

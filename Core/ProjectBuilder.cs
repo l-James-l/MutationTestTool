@@ -12,6 +12,7 @@ namespace Core;
 public class ProjectBuilder : IStartUpProcess, IWasBuildSuccessfull
 {
     private IEventAggregator _eventAggrgator;
+    private readonly ISolutionProvider _solutionProvider;
     private readonly IMutationSettings _mutationSettings;
 
     private const int _defaultProcessTimeout = 5;
@@ -21,10 +22,11 @@ public class ProjectBuilder : IStartUpProcess, IWasBuildSuccessfull
 
     public bool WasLastBuildSuccessful { get; private set; } = false;
 
-    public ProjectBuilder(IMutationSettings settings, IEventAggregator eventAggregator)
+    public ProjectBuilder(IMutationSettings settings, IEventAggregator eventAggregator, ISolutionProvider solutionProvider)
     {
         _mutationSettings = settings;
         _eventAggrgator = eventAggregator;
+        _solutionProvider = solutionProvider;
     }
 
     public void StartUp()
@@ -32,8 +34,13 @@ public class ProjectBuilder : IStartUpProcess, IWasBuildSuccessfull
         _eventAggrgator.GetEvent<RequestSolutionBuildEvent>().Subscribe(InitialBuild);
     }
 
-    private void InitialBuild(SolutionContainer solution)
+    private void InitialBuild()
     {
+        if (!_solutionProvider.IsAvailable || _solutionProvider.SolutionContiner is not { } solution)
+        {
+            return;
+        }
+
         _processTimeout = TimeSpan.FromSeconds(_mutationSettings.SolutionProfileData?.GeneralSettings.BuildTimeout ?? _defaultProcessTimeout);
 
         // The build process will have exit code 1 if the build failed.

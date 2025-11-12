@@ -2,7 +2,7 @@
 
 public class CancelationTokenFactory : ICancelationTokenFactory
 {
-    public CancellationTokenSource Generate() => new CancellationTokenSource();
+    public ICancellationTokenWrapper Generate() => new CancellationTokenWrapper();
 }
 
 public interface ICancelationTokenFactory
@@ -11,5 +11,23 @@ public interface ICancelationTokenFactory
     /// DI factory for cancelation tokens.
     /// </summary>
     /// <returns></returns>
-    CancellationTokenSource Generate();
+    ICancellationTokenWrapper Generate();
+}
+
+/// <summary>
+/// By extending the CancelationTokenSource, and wrapping the IsCancellationRequested property, 
+/// we can intercept when its checked
+/// </summary>
+public interface ICancellationTokenWrapper
+{
+    bool IsCancelled();
+
+    void Cancel();
+}
+
+public class CancellationTokenWrapper : CancellationTokenSource,  ICancellationTokenWrapper
+{
+    public bool IsCancelled() => IsCancellationRequested;
+
+    public new void Cancel() => base.Cancel();
 }
