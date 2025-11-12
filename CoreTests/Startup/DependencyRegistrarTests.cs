@@ -1,6 +1,7 @@
 ﻿using CLI;
 using Core;
 using Core.IndustrialEstate;
+using Core.Interfaces;
 using Core.Startup;
 using Microsoft.Extensions.DependencyInjection;
 using Models;
@@ -11,11 +12,13 @@ namespace CoreTests.Startup;
 internal class DependencyRegistrarTests
 {
     private IServiceCollection _services;
+    private int _expectedRegistrations;
 
     [SetUp]
     public void Setup()
     {
         _services = Substitute.For<IServiceCollection>();
+        _expectedRegistrations = 0;
     }
 
     [Test]
@@ -33,7 +36,10 @@ internal class DependencyRegistrarTests
         AssertBasicRegistartion<IAnalyzerManagerFactory, AnalyzerManagerFactory>();
         AssertBasicRegistartion<IEventAggregator, EventAggregator>();
         AssertBasicRegistartion<IMutationSettings, MutationSettings>();
-        AssertBasicRegistartion<IStartUpProcess, SolutionProfileDeserializer>();
+        AssertBasicRegistartion<ISolutionProfileDeserializer, SolutionProfileDeserializer>();
+        AssertBasicRegistartion<IProjectBuilder, ProjectBuilder>();
+
+        _services.ReceivedWithAnyArgs(_expectedRegistrations).Add(default!);
     }
 
     [Test]
@@ -53,6 +59,8 @@ internal class DependencyRegistrarTests
 
     private void AssertBasicRegistartion<T1, T2>(bool isSingleton = true)
     {
+        _expectedRegistrations++;
+
         _services.Received(1).Add(Arg.Is<ServiceDescriptor>(x => 
         x.Lifetime == (isSingleton ? ServiceLifetime.Singleton : ServiceLifetime.Transient)
         && x.ImplementationType == typeof(T2)
@@ -64,6 +72,8 @@ internal class DependencyRegistrarTests
         AssertBasicRegistartion<T>();
         foreach (Type type in baseTypes)
         {
+            _expectedRegistrations++;
+
             _services.Received(1).Add(Arg.Is<ServiceDescriptor>(x =>
             x.Lifetime == ServiceLifetime.Singleton
             && x.ServiceType == type

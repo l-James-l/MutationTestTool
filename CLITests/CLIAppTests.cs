@@ -1,5 +1,5 @@
 ﻿using CLI;
-using Core;
+using Core.Interfaces;
 using Models;
 using Models.Events;
 using NSubstitute;
@@ -12,6 +12,7 @@ public class CLIAppTests
 
     private IEventAggregator _eventAggregator;
     private IMutationSettings _mutationSettings;
+    private ISolutionProvider _solutionProvider;
 
     private TextReader _originalIn;
     private SolutionPathProvided _solutionPathProvided;
@@ -22,12 +23,19 @@ public class CLIAppTests
         _originalIn = Console.In;
         _eventAggregator = Substitute.For<IEventAggregator>();
         _mutationSettings = Substitute.For<IMutationSettings>();
+        _solutionProvider = Substitute.For<ISolutionProvider>();
 
         _solutionPathProvided = Substitute.For<SolutionPathProvided>();
 
+        _solutionProvider.IsAvailable.Returns(false);
+
         _eventAggregator.GetEvent<SolutionPathProvided>().Returns(_solutionPathProvided);
 
-        _app = new CLIApp(_eventAggregator, _mutationSettings);
+        _app = new CLIApp(_eventAggregator, _mutationSettings, _solutionProvider);
+
+         //Limit testing to a single run through.
+        _solutionPathProvided.When(x => x.Publish(Arg.Any<SolutionPathProvidedPayload>()))
+            .Do(_ => _solutionProvider.IsAvailable.Returns(true));
     }
 
     [TearDown]
@@ -77,20 +85,7 @@ public class CLIAppTests
         _app.Run(Array.Empty<string>());
 
         // Assert
-        _solutionPathProvided.Received(0).Publish(Arg.Any<SolutionPathProvidedPayload>());
-    }
-
-    [Test]
-    public void GivenNotDevModeAndNoInput_WhenRun_ThenLogsErrorAndDoesNotPublish()
-    {
-        // Arrange
-        Console.SetIn(new StringReader(Environment.NewLine));
-        
-        // Act
-        _app.Run(Array.Empty<string>());
-     
-        // Assert
-        _solutionPathProvided.DidNotReceive().Publish(Arg.Any<SolutionPathProvidedPayload>());
+        _solutionPathProvided.Received(1).Publish(Arg.Is<SolutionPathProvidedPayload>(x => x.SolutionPath == ""));
     }
 
     [Test]

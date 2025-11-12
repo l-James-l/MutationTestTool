@@ -1,33 +1,24 @@
-﻿using Core.Startup;
+﻿using Core.Interfaces;
 using Models;
-using Models.Events;
 using Serilog;
 using YamlDotNet.Serialization;
 
 namespace Core;
 
-public class SolutionProfileDeserializer : IStartUpProcess
+public class SolutionProfileDeserializer : ISolutionProfileDeserializer
 {
     private const string solutionProfileFileName = ".darwingSolutionProfile.yml";
 
-    private readonly IEventAggregator _eventAggregator;
     private readonly IMutationSettings _mutationSettings;
 
-    public SolutionProfileDeserializer(IEventAggregator eventAggregator, IMutationSettings mutationSettings)
+    public SolutionProfileDeserializer(IMutationSettings mutationSettings)
     {
-        ArgumentNullException.ThrowIfNull(eventAggregator);
         ArgumentNullException.ThrowIfNull(mutationSettings);
 
         _mutationSettings = mutationSettings;
-        _eventAggregator = eventAggregator;
     }
 
-    public void StartUp()
-    {
-        _eventAggregator.GetEvent<SolutionPathProvided>().Subscribe(x => LoadSlnProfileIfPresent(x.SolutionPath));
-    }
-
-    private void LoadSlnProfileIfPresent(string slnFilePath)
+    public void LoadSlnProfileIfPresent(string slnFilePath)
     {
         ArgumentNullException.ThrowIfNull(slnFilePath);
 
