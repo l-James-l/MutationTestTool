@@ -37,7 +37,7 @@ internal class DependencyRegistrarTests
         AssertBasicRegistartion<IEventAggregator, EventAggregator>();
         AssertBasicRegistartion<IMutationSettings, MutationSettings>();
         AssertBasicRegistartion<ISolutionProfileDeserializer, SolutionProfileDeserializer>();
-        AssertBasicRegistartion<IProjectBuilder, ProjectBuilder>();
+        AssertBasicRegistartion<IStartUpProcess, ProjectBuilder>();
 
         _services.ReceivedWithAnyArgs(_expectedRegistrations).Add(default!);
     }

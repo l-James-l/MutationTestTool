@@ -1,4 +1,5 @@
 ﻿using CLI;
+using Core.IndustrialEstate;
 using Core.Interfaces;
 using Models;
 using Models.Events;
@@ -13,9 +14,10 @@ public class CLIAppTests
     private IEventAggregator _eventAggregator;
     private IMutationSettings _mutationSettings;
     private ISolutionProvider _solutionProvider;
+    private ICancelationTokenFactory _cancelationTokenFactory;
 
     private TextReader _originalIn;
-    private SolutionPathProvided _solutionPathProvided;
+    private SolutionPathProvidedEvent _solutionPathProvided;
 
     [SetUp]
     public void SetUp()
@@ -24,14 +26,15 @@ public class CLIAppTests
         _eventAggregator = Substitute.For<IEventAggregator>();
         _mutationSettings = Substitute.For<IMutationSettings>();
         _solutionProvider = Substitute.For<ISolutionProvider>();
+        _cancelationTokenFactory = Substitute.For<ICancelationTokenFactory>();
 
-        _solutionPathProvided = Substitute.For<SolutionPathProvided>();
+        _solutionPathProvided = Substitute.For<SolutionPathProvidedEvent>();
 
         _solutionProvider.IsAvailable.Returns(false);
 
-        _eventAggregator.GetEvent<SolutionPathProvided>().Returns(_solutionPathProvided);
+        _eventAggregator.GetEvent<SolutionPathProvidedEvent>().Returns(_solutionPathProvided);
 
-        _app = new CLIApp(_eventAggregator, _mutationSettings, _solutionProvider);
+        _app = new CLIApp(_eventAggregator, _mutationSettings, _solutionProvider, _cancelationTokenFactory);
 
          //Limit testing to a single run through.
         _solutionPathProvided.When(x => x.Publish(Arg.Any<SolutionPathProvidedPayload>()))

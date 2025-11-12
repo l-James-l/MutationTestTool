@@ -1,26 +1,38 @@
 ﻿using Core.Interfaces;
+using Core.Startup;
 using Microsoft.CodeAnalysis;
 using Models;
+using Models.Events;
 using Serilog;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 
 namespace Core;
 
-public class ProjectBuilder : IProjectBuilder
+public class ProjectBuilder : IStartUpProcess, IWasBuildSuccessfull
 {
+    private IEventAggregator _eventAggrgator;
     private readonly IMutationSettings _mutationSettings;
+
     private const int _defaultProcessTimeout = 5;
     private TimeSpan _processTimeout = TimeSpan.FromSeconds(_defaultProcessTimeout);
 
-    private Regex _errorOutPutRegex = new Regex(@"error (\S)*: ", RegexOptions.Compiled, TimeSpan.FromSeconds(1));
+    private readonly Regex _errorOutPutRegex = new(@"error (\S)*: ", RegexOptions.Compiled, TimeSpan.FromSeconds(1));
 
-    public ProjectBuilder(IMutationSettings settings)
+    public bool WasLastBuildSuccessful { get; private set; } = false;
+
+    public ProjectBuilder(IMutationSettings settings, IEventAggregator eventAggregator)
     {
         _mutationSettings = settings;
+        _eventAggrgator = eventAggregator;
     }
 
-    public bool InitialBuild(SolutionContainer solution)
+    public void StartUp()
+    {
+        _eventAggrgator.GetEvent<RequestSolutionBuildEvent>().Subscribe(InitialBuild);
+    }
+
+    private void InitialBuild(SolutionContainer solution)
     {
         _processTimeout = TimeSpan.FromSeconds(_mutationSettings.SolutionProfileData?.GeneralSettings.BuildTimeout ?? _defaultProcessTimeout);
 
@@ -30,12 +42,16 @@ public class ProjectBuilder : IProjectBuilder
 
         TryBuildAllProjects(solution, failedBuilds);
         
-        if (failedBuilds.Count > 0)
+        if (failedBuilds.Count > 0 && !RetryFailedProjectBuilds(failedBuilds))
         {
-            return RetryFailedProjectBuilds(failedBuilds);
+            WasLastBuildSuccessful = false;
+            Log.Error("Solution build has failed. Cannot perform mutation testing.");
         }
-
-        return true;
+        else
+        {
+            WasLastBuildSuccessful = true;
+            Log.Information("Building of solution succesful.");
+        }
     }
     private void TryBuildAllProjects(SolutionContainer solution, List<Project> failedBuilds)
     {
