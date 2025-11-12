@@ -1,4 +1,7 @@
-﻿namespace CLITests;
+using Castle.Core.Resource;
+using Serilog;
+using System.Text;
+namespace CLITests;
 
 public class ProgramTests
 {
@@ -37,7 +40,7 @@ public class ProgramTests
         }
     }
 
-    [Test]
+    [Test, Explicit("This test is basically just for the sake of it, and it cloggs up the test output because it creates a real logger.")]
     public void WhenMainCalled_ThenDoesNotThrow()
     {
         //TODO, this doesnt actually test anything. exeptions dont cause this test to fail. find fix.
