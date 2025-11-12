@@ -1,4 +1,5 @@
 using Castle.Core.Resource;
+using Serilog;
 using System.Text;
 namespace CLITests;
 
@@ -19,7 +20,10 @@ public class ProgramTests
         _originalIn = Console.In;
         // Provide a blank line so CLIApp.ReadLine will return and not block
         Console.SetIn(new StringReader(Environment.NewLine));
+
+        // Set the console out and logging to be intercepted so we dont clog up the test output
         Console.SetOut(new StringWriter(new StringBuilder()));
+        Log.Logger = new LoggerConfiguration().WriteTo.TestCorrelator().CreateLogger();
     }
 
     [TearDown]
