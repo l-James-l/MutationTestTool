@@ -14,19 +14,14 @@ public class SolutionProfileDeserializerTests
     private SolutionProfileDeserializer _solutionProfileDeserializer; // SUT
 
     private IMutationSettings _mutationSettings;
-    private IEventAggregator _eventAggregator;
 
     [SetUp]
     public void SetUP()
     {
-        _eventAggregator = Substitute.For<IEventAggregator>();
         _mutationSettings = Substitute.For<IMutationSettings>();
 
-        _eventAggregator.GetEvent<SolutionPathProvided>().Returns(new SolutionPathProvided());
 
-        _solutionProfileDeserializer = new SolutionProfileDeserializer(_eventAggregator, _mutationSettings);
-
-        _solutionProfileDeserializer.StartUp();
+        _solutionProfileDeserializer = new SolutionProfileDeserializer(_mutationSettings);
 
         Log.Logger = new LoggerConfiguration().WriteTo.TestCorrelator().CreateLogger();
         TestCorrelator.CreateContext();
@@ -37,7 +32,7 @@ public class SolutionProfileDeserializerTests
     {
         //Arrange
         //Act
-        _eventAggregator.GetEvent<SolutionPathProvided>().Publish(new SolutionPathProvidedPayload("./"));
+        _solutionProfileDeserializer.LoadSlnProfileIfPresent("./");
 
         //Assert
         Assert.That(TestCorrelator.GetLogEventsFromCurrentContext().FirstOrDefault(x =>
@@ -50,7 +45,7 @@ public class SolutionProfileDeserializerTests
     {
         //Arrange
         //Act
-        _eventAggregator.GetEvent<SolutionPathProvided>().Publish(new SolutionPathProvidedPayload(""));
+        _solutionProfileDeserializer.LoadSlnProfileIfPresent("");
 
         //Assert
         Assert.That(TestCorrelator.GetLogEventsFromCurrentContext().FirstOrDefault(x =>
@@ -63,7 +58,7 @@ public class SolutionProfileDeserializerTests
     {
         //Arrange
         //Act
-        _eventAggregator.GetEvent<SolutionPathProvided>().Publish(new SolutionPathProvidedPayload("./TestData/example.sln"));
+        _solutionProfileDeserializer.LoadSlnProfileIfPresent("./TestData/example.sln");
 
         //Assert
         Assert.That(TestCorrelator.GetLogEventsFromCurrentContext().FirstOrDefault(x =>

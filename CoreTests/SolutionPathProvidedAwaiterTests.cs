@@ -1,6 +1,8 @@
 ﻿using Buildalyzer;
 using Core;
 using Core.IndustrialEstate;
+using Core.Interfaces;
+using Models;
 using Models.Events;
 using NSubstitute;
 using Serilog;
@@ -14,6 +16,9 @@ public class SolutionPathProvidedAwaiterTests
 
     private IEventAggregator _eventAggregator;
     private IAnalyzerManagerFactory _analyzerManagerFactory;
+    private ISolutionProfileDeserializer _slnProfileDeserializer;
+    private IMutationSettings _mutationSettings;
+    private IProjectBuilder _projectBuilder;
 
     private SolutionPathProvided _solutionPathProvided;
 
@@ -22,12 +27,15 @@ public class SolutionPathProvidedAwaiterTests
     {
         _eventAggregator = Substitute.For<IEventAggregator>();
         _analyzerManagerFactory = Substitute.For<IAnalyzerManagerFactory>();
+        _slnProfileDeserializer = Substitute.For<ISolutionProfileDeserializer>();
+        _mutationSettings = Substitute.For<IMutationSettings>();
+        _projectBuilder = Substitute.For<IProjectBuilder>();
 
         _solutionPathProvided = new SolutionPathProvided();
 
         _eventAggregator.GetEvent<SolutionPathProvided>().Returns(_solutionPathProvided);
 
-        _awaiter = new SolutionPathProvidedAwaiter(_eventAggregator, _analyzerManagerFactory);
+        _awaiter = new SolutionPathProvidedAwaiter(_eventAggregator, _analyzerManagerFactory, _slnProfileDeserializer, _mutationSettings, _projectBuilder);
     }
 
     [Test]
@@ -39,12 +47,16 @@ public class SolutionPathProvidedAwaiterTests
         _analyzerManagerFactory.CreateAnalyzerManager(Arg.Any<string>()).Returns(mockAnalyzerManager);
         _awaiter.StartUp();
 
+        //TODO this would fail on a build server
+        const string SolutionPath = @"C:\Users\THINKPAD\Documents\git\SimpleTestProject\SimpleTestProject.sln";
+
         // Act
-        _eventAggregator.GetEvent<SolutionPathProvided>().Publish(new SolutionPathProvidedPayload(@"C:\Users\THINKPAD\Documents\git\SimpleTestProject\SimpleTestProject.sln"));
+        _eventAggregator.GetEvent<SolutionPathProvided>().Publish(new SolutionPathProvidedPayload(SolutionPath));
 
         // Assert
-        //_eventAggregator.Received(2).GetEvent<SolutionPathProvided>();
-        _analyzerManagerFactory.Received(1).CreateAnalyzerManager(Arg.Any<string>()/*@"C:\Users\THINKPAD\Documents\git\SimpleTestProject\SimpleTestProject.sln"*/);
+        _analyzerManagerFactory.Received(1).CreateAnalyzerManager(Arg.Is<string>(x => x == SolutionPath));
+        _projectBuilder.Received(1).InitialBuild(Arg.Is<SolutionContainer>(x => x.AnalyzerManager == mockAnalyzerManager));
+        _slnProfileDeserializer.Received(1).LoadSlnProfileIfPresent(SolutionPath);
     }
 
     [Test]

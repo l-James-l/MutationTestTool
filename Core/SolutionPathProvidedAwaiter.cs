@@ -1,5 +1,6 @@
 ﻿using Buildalyzer;
 using Core.IndustrialEstate;
+using Core.Interfaces;
 using Core.Startup;
 using Models;
 using Models.Events;
@@ -7,21 +8,40 @@ using Serilog;
 
 namespace Core;
 
+/// <summary>
+/// This class will handle performing actions required as soon as a solution path has been provided.
+/// This includes:
+///     - Locating the solution, and initializing the solution container
+///     - Checking for a solution profile
+///     - Performing an initial build
+/// </summary>
 public class SolutionPathProvidedAwaiter : IStartUpProcess, ISolutionProvider
 {
     private readonly IEventAggregator _eventAggregator;
     private readonly IAnalyzerManagerFactory _analyzerManagerFactory;
+    private readonly ISolutionProfileDeserializer _slnProfileDeserializer;
+    private readonly IMutationSettings _mutationSettings;
+    private readonly IProjectBuilder _projectBuilder;
 
-    public SolutionContiner SolutionContiner => _solutionContainer ?? throw new InvalidOperationException("Attempted to retrieve a solution before one has been loaded.");
-    private SolutionContiner? _solutionContainer;
+    public SolutionContainer SolutionContiner => _solutionContainer ?? throw new InvalidOperationException("Attempted to retrieve a solution before one has been loaded.");
+    private SolutionContainer? _solutionContainer;
 
-    public SolutionPathProvidedAwaiter(IEventAggregator eventAggregator, IAnalyzerManagerFactory analyzerManagerFactory)
+    public bool IsAvailable => _solutionContainer != null;
+
+    public SolutionPathProvidedAwaiter(IEventAggregator eventAggregator, IAnalyzerManagerFactory analyzerManagerFactory, 
+        ISolutionProfileDeserializer slnProfileDeserializer, IMutationSettings mutationSettings, IProjectBuilder projectBuilder)
     {
         ArgumentNullException.ThrowIfNull(eventAggregator);
         ArgumentNullException.ThrowIfNull(analyzerManagerFactory);
+        ArgumentNullException.ThrowIfNull(slnProfileDeserializer);
+        ArgumentNullException.ThrowIfNull(mutationSettings);
+        ArgumentNullException.ThrowIfNull(projectBuilder);
 
         _eventAggregator = eventAggregator;
         _analyzerManagerFactory = analyzerManagerFactory;
+        _slnProfileDeserializer = slnProfileDeserializer;
+        _mutationSettings = mutationSettings;
+        _projectBuilder = projectBuilder;
     }
 
     public void StartUp()
@@ -38,19 +58,29 @@ public class SolutionPathProvidedAwaiter : IStartUpProcess, ISolutionProvider
         if (string.IsNullOrWhiteSpace(payload.SolutionPath) || !payload.SolutionPath.EndsWith(".sln") || !File.Exists(payload.SolutionPath))
         {
             Log.Error($"Solution file not found at location: {payload.SolutionPath}");
+            _mutationSettings.SolutionPath = "";
             return;
         }
 
         try
         {
             IAnalyzerManager analyzerManager = _analyzerManagerFactory.CreateAnalyzerManager(payload.SolutionPath);
-            _solutionContainer = new SolutionContiner(analyzerManager);
+            _solutionContainer = new SolutionContainer(analyzerManager);
         }
         catch (Exception ex)
         {
             Log.Error("Failed to load solution.");
             Log.Debug($"Failed to create AnalyzerManager for solution at location: {payload.SolutionPath}. {ex}");
             return;
+        }
+
+        if (_solutionContainer is not null)
+        {
+            //Do this outside the try catch so that errors caught are only for loading the solution.
+            //Deserializer shall handle its own exceptions.
+            _slnProfileDeserializer.LoadSlnProfileIfPresent(payload.SolutionPath);
+            _solutionContainer.FindTestProjects(_mutationSettings);
+            _projectBuilder.InitialBuild(_solutionContainer);
         }
     }
 }

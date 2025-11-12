@@ -1,4 +1,5 @@
 ﻿using Core.IndustrialEstate;
+using Core.Interfaces;
 using CoreTests.Startup;
 using Microsoft.Extensions.DependencyInjection;
 using Models;
@@ -47,7 +48,8 @@ public abstract class DependencyRegistrar
         Services.AddSingleton<EstablishLoggerConfiguration>();
         Services.AddSingleton<IAnalyzerManagerFactory, AnalyzerManagerFactory>();
         Services.AddSingleton<IMutationSettings, MutationSettings>();
-        Services.AddSingleton<IStartUpProcess, SolutionProfileDeserializer>();
+        Services.AddSingleton<ISolutionProfileDeserializer, SolutionProfileDeserializer>();
+        Services.AddSingleton<IProjectBuilder, ProjectBuilder>();
 
         Services.RegisterManySingleton<SolutionPathProvidedAwaiter>(); //Startup process and solution provider.
 
