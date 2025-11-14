@@ -22,7 +22,8 @@ public class SolutionPathProvidedAwaiter : IStartUpProcess, ISolutionProvider
     private readonly ISolutionProfileDeserializer _slnProfileDeserializer;
     private readonly IMutationSettings _mutationSettings;
 
-    public SolutionContainer SolutionContiner => _solutionContainer ?? throw new InvalidOperationException("Attempted to retrieve a solution before one has been loaded.");
+    //By making the public property the interface, we can mock the solution in testing.
+    public ISolutionContainer SolutionContiner => _solutionContainer ?? throw new InvalidOperationException("Attempted to retrieve a solution before one has been loaded.");
     private SolutionContainer? _solutionContainer;
 
     public bool IsAvailable => _solutionContainer != null;
@@ -48,6 +49,20 @@ public class SolutionPathProvidedAwaiter : IStartUpProcess, ISolutionProvider
         _eventAggregator.GetEvent<SolutionPathProvidedEvent>().Subscribe(OnSolutionPathProvided);
     }
 
+    private void TryCreateManager(string path)
+    {
+        try
+        {
+            IAnalyzerManager analyzerManager = _analyzerManagerFactory.CreateAnalyzerManager(path);
+            _solutionContainer = new SolutionContainer(analyzerManager);
+        }
+        catch (Exception ex)
+        {
+            Log.Error("Failed to load solution.");
+            Log.Debug($"Failed to create AnalyzerManager for solution at location: {path}. {ex}");
+        }
+    }
+
     private void OnSolutionPathProvided(SolutionPathProvidedPayload payload)
     {
         ArgumentNullException.ThrowIfNull(payload);
@@ -56,19 +71,11 @@ public class SolutionPathProvidedAwaiter : IStartUpProcess, ISolutionProvider
         {
             Log.Error($"Solution file not found at location: {payload.SolutionPath}");
             _mutationSettings.SolutionPath = "";
-            return;
+            _solutionContainer = null;
         }
-
-        try
+        else
         {
-            IAnalyzerManager analyzerManager = _analyzerManagerFactory.CreateAnalyzerManager(payload.SolutionPath);
-            _solutionContainer = new SolutionContainer(analyzerManager);
-        }
-        catch (Exception ex)
-        {
-            Log.Error("Failed to load solution.");
-            Log.Debug($"Failed to create AnalyzerManager for solution at location: {payload.SolutionPath}. {ex}");
-            return;
+            TryCreateManager(payload.SolutionPath);
         }
 
         if (_solutionContainer is not null)
@@ -77,7 +84,9 @@ public class SolutionPathProvidedAwaiter : IStartUpProcess, ISolutionProvider
             //Deserializer shall handle its own exceptions.
             _slnProfileDeserializer.LoadSlnProfileIfPresent(payload.SolutionPath);
             _solutionContainer.FindTestProjects(_mutationSettings);
-            _eventAggregator.GetEvent<RequestSolutionBuildEvent>().Publish();
         }
+
+        // Always publish this at the end so that the most recent build info can be updated, including where the new solution path was invalid.
+        _eventAggregator.GetEvent<RequestSolutionBuildEvent>().Publish();
     }
 }
