@@ -1,4 +1,4 @@
-﻿using Core.IndustrialEstate;
+using Core.IndustrialEstate;
 using Core.Interfaces;
 using Models;
 using Models.Events;
@@ -10,10 +10,11 @@ public class CLIApp
 {
     private const string LoadCommand = "--load";
     private const string BuildCommand = "--build";
+    private const string ReloadCommand = "--reload";
     private const string TestCommand = "--test";
     private const string SettingsCommand = "--setting";
-    private const string HelpCommand = "--help";
     private const string QuitCommand = "--quit";
+    private const string HelpCommand = "--help";
 
     private readonly IEventAggregator _eventAggregator;
     private readonly IMutationSettings _mutationSettings;
@@ -21,12 +22,15 @@ public class CLIApp
     private readonly IWasBuildSuccessfull _buildSuccess;
     private readonly ICancellationTokenWrapper _cancelationToken;
 
+
     public CLIApp(IEventAggregator eventAggregator, IMutationSettings mutationSettings, ISolutionProvider solutionProvider,
         ICancelationTokenFactory cancelationTokenFactory, IWasBuildSuccessfull buildSuccess)
     {
         ArgumentNullException.ThrowIfNull(eventAggregator);
         ArgumentNullException.ThrowIfNull(mutationSettings);
         ArgumentNullException.ThrowIfNull(solutionProvider);
+        ArgumentNullException.ThrowIfNull(cancelationTokenFactory);
+        ArgumentNullException.ThrowIfNull(buildSuccess);
 
         _eventAggregator = eventAggregator;
         _mutationSettings = mutationSettings;
@@ -61,6 +65,8 @@ public class CLIApp
             // Should not be multiple on a single line.
             string command = Console.ReadLine() ?? "";
             command = command.Trim();
+            Log.Debug($"CLI recieved user command: {command}");
+            
             if (command.IndexOf(" ") is int seperator && seperator > 0)
             {
                 string commandType = command.Substring(0, seperator);
@@ -88,6 +94,9 @@ public class CLIApp
                 //rerun initial build - for when a project was loaded, failed the build, and they want to retry it.
                 SolutionBuilderCommand(commandParams, out response);
                 break;
+            case ReloadCommand:
+                SolutionLoaderCommand([_mutationSettings.SolutionPath], out response);
+                break;
             case TestCommand:
                 //run mutation testing
                 InitiateTestSession(commandParams, out response);
@@ -97,6 +106,7 @@ public class CLIApp
                 break;
             case HelpCommand:
                 // Output available commands
+                HelpOutputCommand();
                 break;
             case QuitCommand:
                 _cancelationToken.Cancel();
@@ -137,6 +147,7 @@ public class CLIApp
         response = null;
         if (_solutionProvider.IsAvailable)
         {
+            Log.Warning($"Rebuilding the solution does not not reload changes made to the source code since the last load, but they will be included in the build. To indlude changes use command '{ReloadCommand}'");
             _eventAggregator.GetEvent<RequestSolutionBuildEvent>().Publish();
         }
         else
@@ -163,5 +174,18 @@ public class CLIApp
 
         // TODO parse command params so we can update any overriden settings.
         _eventAggregator.GetEvent<InitiateTestRunEvent>().Publish();
+    }
+
+    private void HelpOutputCommand()
+    {
+        Console.Write($"""
+        {LoadCommand}:      Provide a path to a solution file so that Darwing can load the source code and perform a build.
+        {BuildCommand}:     Will build the solution at the previsouly provided solution location. Note that will not reload any changes made to the solutions source code since the last build into Darwing, but as the build is perfomred 'in place', the build will include them. In the instance changes to the source code have been made, please use '{ReloadCommand}'.
+        {ReloadCommand}:    Will reload the source code for the already loaded solution.
+        {TestCommand}:      Will start a mutation run on the loaded code base. Note a loaded solution with a successful build are required.
+        {SettingsCommand}:  Change the specified setting to the specified value.
+        {QuitCommand}:      Terminate the application.
+        {HelpCommand}:      Help command.
+        """);
     }
 }

@@ -52,6 +52,7 @@ public abstract class DependencyRegistrar
         Services.RegisterManySingleton<ProjectBuilder>(); //IStartupProcess && IWasBuildSuccessful
         Services.AddSingleton<ICancelationTokenFactory, CancelationTokenFactory>();
         Services.RegisterManySingleton<SolutionPathProvidedAwaiter>(); //IStartupProcess and ISolutionProvider.
+        Services.AddSingleton<IStartUpProcess, InitialtestRunnner>();
 
         RegisterLocalDependencies();
     }

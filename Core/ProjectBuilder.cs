@@ -36,6 +36,7 @@ public class ProjectBuilder : IStartUpProcess, IWasBuildSuccessfull
 
     private void InitialBuild()
     {
+        WasLastBuildSuccessful = false;
         if (!_solutionProvider.IsAvailable || _solutionProvider.SolutionContiner is not { } solution)
         {
             return;
@@ -51,7 +52,6 @@ public class ProjectBuilder : IStartUpProcess, IWasBuildSuccessfull
         
         if (failedBuilds.Count > 0 && !RetryFailedProjectBuilds(failedBuilds))
         {
-            WasLastBuildSuccessful = false;
             Log.Error("Solution build has failed. Cannot perform mutation testing.");
         }
         else
@@ -77,24 +77,7 @@ public class ProjectBuilder : IStartUpProcess, IWasBuildSuccessfull
             }
             Log.Information($"{proj.Name} build failed");
             failedBuilds.Add(proj);
-
-            if (buildingProcess.StandardError.ReadToEnd() is string errorsOutput)
-            {
-                Log.Information($"Errors encountered while trying to build {proj.Name}. Will clean and retry");
-                Log.Debug(errorsOutput);
-            }
-
-            while (buildingProcess.StandardOutput.ReadLine() is { } output)
-            {
-                if (_errorOutPutRegex.IsMatch(output))
-                {
-                    Log.Information(output);
-                }
-                else
-                {
-                    Log.Debug(output);
-                }
-            }
+            LogProcessOutput(proj, buildingProcess);
         }
     }
 
@@ -112,6 +95,7 @@ public class ProjectBuilder : IStartUpProcess, IWasBuildSuccessfull
             if (!cleaningCompleted || cleaningProcess.ExitCode != 0)
             {
                 Log.Information($"Failed to clean {projToRetry.Name}");
+                LogProcessOutput(projToRetry, cleaningProcess);
                 return false;
             }
 
@@ -123,6 +107,7 @@ public class ProjectBuilder : IStartUpProcess, IWasBuildSuccessfull
             if (!restoreCompleted || cleaningProcess.ExitCode != 0)
             {
                 Log.Information($"Failed to retore dependecies for {projToRetry.Name}");
+                LogProcessOutput(projToRetry, restoreProcess);
                 return false;
             }
 
@@ -136,6 +121,7 @@ public class ProjectBuilder : IStartUpProcess, IWasBuildSuccessfull
             {
                 // Second attempt at building the project failed. Return out, dont bother retrying any other failed projects.
                 Log.Information($"Rebuilding {projToRetry.Name} failed.");
+                LogProcessOutput(projToRetry, buildRetyProcess);
                 return false;
             }
 
@@ -143,6 +129,27 @@ public class ProjectBuilder : IStartUpProcess, IWasBuildSuccessfull
         }
 
         return true;
+    }
+
+    private void LogProcessOutput(Project proj, Process buildingProcess)
+    {
+        if (buildingProcess.StandardError.ReadToEnd() is string errorsOutput)
+        {
+            Log.Information($"Errors encountered while trying to build {proj.Name}. Will clean and retry");
+            Log.Debug(errorsOutput);
+        }
+
+        while (buildingProcess.StandardOutput.ReadLine() is { } output)
+        {
+            if (_errorOutPutRegex.IsMatch(output))
+            {
+                Log.Information(output);
+            }
+            else
+            {
+                Log.Debug(output);
+            }
+        }
     }
 
     private Process GenerateBuildProcess(string? path)
