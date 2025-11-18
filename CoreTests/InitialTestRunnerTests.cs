@@ -119,4 +119,6 @@ public class InitialTestRunnerTests
         testProcess.Received(1).StartAndAwait(null);
         _mutationRunManager.DidNotReceiveWithAnyArgs().Run(default!);
     }
+
+    //TODO: see if I can add tests for the file/ syntax tree discovery section
 }
