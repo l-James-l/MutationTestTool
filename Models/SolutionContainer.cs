@@ -46,10 +46,14 @@ public class SolutionContainer: ISolutionContainer
     }
 }
 
-//TODO maybe: Create project container to hold information about each project, such as its path, analyzer and project instance etc.
-
 
 public interface ISolutionContainer
 {
     public List<IProjectContainer> AllProjects { get; }
+
+    public List<IProjectContainer> SolutionProjects { get; }
+
+    public Solution Solution { get; }
+
+    public AdhocWorkspace Workspace { get; }
 }

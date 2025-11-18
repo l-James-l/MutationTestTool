@@ -3,6 +3,7 @@ using Core.Interfaces;
 using Core.Startup;
 using Models;
 using Models.Events;
+using Mutator;
 using Serilog;
 using System.Diagnostics;
 
@@ -13,17 +14,17 @@ public class InitialTestRunnner : IStartUpProcess
     private readonly IEventAggregator _eventAggregator;
     private readonly IMutationSettings _mutationSettings;
     private readonly IWasBuildSuccessfull _wasBuildSuccessfull;
-    private readonly InitialTestRunInfo _initialTestRunInfo;
     private readonly IProcessWrapperFactory _processFactory;
+    private IMutationRunManager _mutationRunManager;
 
     public InitialTestRunnner(IEventAggregator eventAggregator, IMutationSettings mutationSettings, IWasBuildSuccessfull wasBuildSuccessfull,
-        InitialTestRunInfo initialTestRunInfo, IProcessWrapperFactory processFactory)
+        IProcessWrapperFactory processFactory, IMutationRunManager mutationRunManager)
     {
         _eventAggregator = eventAggregator;
         _mutationSettings = mutationSettings;
         _wasBuildSuccessfull = wasBuildSuccessfull;
-        _initialTestRunInfo = initialTestRunInfo;
         _processFactory = processFactory;
+        _mutationRunManager = mutationRunManager;
     }
 
     public void StartUp()
@@ -36,7 +37,7 @@ public class InitialTestRunnner : IStartUpProcess
     /// </summary>
     private void InitialTestRun()
     {
-        _initialTestRunInfo.WasSuccesful = false;
+        InitialTestRunInfo testRunInfo = new InitialTestRunInfo();
 
         //By checking we have a succesful build, we implicitly know that there is a solution loaded.
         if (!_wasBuildSuccessfull.WasLastBuildSuccessful)
@@ -57,8 +58,9 @@ public class InitialTestRunnner : IStartUpProcess
             WorkingDirectory = Path.GetDirectoryName(_mutationSettings.SolutionPath)
         };
         IProcessWrapper testRun = _processFactory.Create(startInfo);
+
         int? timeout = _mutationSettings.SolutionProfileData?.GeneralSettings.TestRunTimeout;
-        bool processSuccess = testRun.StartAndAwait(TimeSpan.FromSeconds(timeout ?? TimeSpan.MaxValue.TotalSeconds));
+        bool processSuccess = testRun.StartAndAwait(timeout);
 
         foreach (string output in testRun.Output)
         {
@@ -71,7 +73,10 @@ public class InitialTestRunnner : IStartUpProcess
         }
         else
         {
-            _initialTestRunInfo.WasSuccesful = true;
+            Log.Information("Initial test run successful, starting mutant discovery.");
+            testRunInfo.WasSuccesful = true;
+            testRunInfo.InitialRunDuration = testRun.Duration;
+            _mutationRunManager.Run(testRunInfo);
         }
     }
 }

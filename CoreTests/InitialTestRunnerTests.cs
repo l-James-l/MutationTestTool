@@ -3,6 +3,7 @@ using Core.IndustrialEstate;
 using Core.Interfaces;
 using Models;
 using Models.Events;
+using Mutator;
 using NSubstitute;
 using System.Diagnostics;
 
@@ -16,8 +17,8 @@ public class InitialTestRunnerTests
     private IMutationSettings _mutationSettings;
     private IWasBuildSuccessfull _buildSuccessfull;
     private IProcessWrapperFactory _processWrapperFactory;
+    private IMutationRunManager _mutationRunManager;
 
-    private InitialTestRunInfo _testRunInfo;
     private InitiateTestRunEvent _initiateTestRunEvent;
 
     [SetUp]
@@ -27,9 +28,9 @@ public class InitialTestRunnerTests
         _mutationSettings = Substitute.For<IMutationSettings>();
         _buildSuccessfull = Substitute.For<IWasBuildSuccessfull>();
         _processWrapperFactory = Substitute.For<IProcessWrapperFactory>();
-        _testRunInfo = new InitialTestRunInfo();
+        _mutationRunManager = Substitute.For<IMutationRunManager>();
 
-        _runner = new InitialTestRunnner(_eventAggregator, _mutationSettings, _buildSuccessfull, _testRunInfo, _processWrapperFactory);
+        _runner = new InitialTestRunnner(_eventAggregator, _mutationSettings, _buildSuccessfull, _processWrapperFactory, _mutationRunManager);
 
         _initiateTestRunEvent = new InitiateTestRunEvent();
         _eventAggregator.GetEvent<InitiateTestRunEvent>().Returns(_initiateTestRunEvent);
@@ -71,7 +72,7 @@ public class InitialTestRunnerTests
         _mutationSettings.SolutionPath.Returns("this/is/the/path/to/solution.sln");
         IProcessWrapper testProcess = Substitute.For<IProcessWrapper>();
         _processWrapperFactory.Create(Arg.Is<ProcessStartInfo>(x => x.Arguments == "test solution.sln --no-build")).Returns(testProcess);
-        testProcess.StartAndAwait(TimeSpan.MaxValue).Returns(true);
+        testProcess.StartAndAwait(null).Returns(true);
         testProcess.Success.Returns(true);
         testProcess.Output.Returns([]);
         testProcess.Errors.Returns([]);
@@ -87,8 +88,8 @@ public class InitialTestRunnerTests
             x.Arguments == "test solution.sln --no-build" &&
             x.WorkingDirectory == "this\\is\\the\\path\\to" &&
             x.RedirectStandardError && x.RedirectStandardOutput && !x.UseShellExecute));
-        testProcess.Received(1).StartAndAwait(TimeSpan.MaxValue);
-        Assert.That(_testRunInfo.WasSuccesful, Is.True);
+        testProcess.Received(1).StartAndAwait(null);
+        _mutationRunManager.Received(1).Run(Arg.Is<InitialTestRunInfo>(x => x.WasSuccesful));
     }
 
     [Test]
@@ -99,7 +100,7 @@ public class InitialTestRunnerTests
         _mutationSettings.SolutionPath.Returns("this/is/the/path/to/solution.sln");
         IProcessWrapper testProcess = Substitute.For<IProcessWrapper>();
         _processWrapperFactory.Create(Arg.Is<ProcessStartInfo>(x => x.Arguments == "test solution.sln --no-build")).Returns(testProcess);
-        testProcess.StartAndAwait(TimeSpan.MaxValue).Returns(true);
+        testProcess.StartAndAwait(null).Returns(true);
         testProcess.Success.Returns(false);
         testProcess.Output.Returns([]);
         testProcess.Errors.Returns([]);
@@ -115,7 +116,9 @@ public class InitialTestRunnerTests
             x.Arguments == "test solution.sln --no-build" &&
             x.WorkingDirectory == "this\\is\\the\\path\\to" &&
             x.RedirectStandardError && x.RedirectStandardOutput && !x.UseShellExecute));
-        testProcess.Received(1).StartAndAwait(TimeSpan.MaxValue);
-        Assert.That(_testRunInfo.WasSuccesful, Is.False);
+        testProcess.Received(1).StartAndAwait(null);
+        _mutationRunManager.DidNotReceiveWithAnyArgs().Run(default!);
     }
+
+    //TODO: see if I can add tests for the file/ syntax tree discovery section
 }
