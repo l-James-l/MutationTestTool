@@ -9,14 +9,14 @@ namespace MutatorTests;
 
 public class MutationDiscoveryManagerTests
 {
-    private MutationDiscoveryManager _mutationDiscoveryManager;
+    private MutationImplementationProvider _mutationDiscoveryManager;
 
     [SetUp]
     public void SetUp()
     {
         IEnumerable<IMutationImplementation> mutators = [new TestMutator1(), new TestMutator2()];
 
-        _mutationDiscoveryManager = new MutationDiscoveryManager(mutators);
+        _mutationDiscoveryManager = new MutationImplementationProvider(mutators);
     }
 
     [Test]
@@ -64,7 +64,7 @@ file class TestMutator1 : IMutationImplementation
 
     public Type RequiredNodeType => typeof(PostfixUnaryExpressionSyntax);
 
-    public SyntaxNode Mutate(SyntaxNode node)
+    (SyntaxNode mutatedNode, SyntaxAnnotation identififer) IMutationImplementation.Mutate(SyntaxNode node)
     {
         throw new NotImplementedException();
     }
@@ -80,7 +80,7 @@ file class TestMutator2 : IMutationImplementation
 
     public Type RequiredNodeType => typeof(BinaryExpressionSyntax);
 
-    public SyntaxNode Mutate(SyntaxNode node)
+    (SyntaxNode mutatedNode, SyntaxAnnotation identififer) IMutationImplementation.Mutate(SyntaxNode node)
     {
         throw new NotImplementedException();
     }
