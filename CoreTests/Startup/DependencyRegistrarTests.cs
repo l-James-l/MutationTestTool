@@ -44,8 +44,9 @@ internal class DependencyRegistrarTests
         AssertBasicRegistartion<IProcessWrapperFactory, ProcessWrapperFactory>();
         AssertBasicRegistartion<IStartUpProcess, InitialTestRunnner>();
 
-        AssertBasicRegistartion<IMutationRunInitiator, MutationDiscoveryManager>();
+        AssertRegisterManySingleton<MutationDiscoveryManager>([typeof(IMutationRunInitiator), typeof(IMutationDiscoveryManager)]);
         AssertBasicRegistartion<IMutationImplementationProvider, MutationImplementationProvider>();
+        AssertBasicRegistartion<IStartUpProcess, MutatedProjectBuilder>();
 
         //IMutationImplementation's
         AssertMutatorRegistration<AddToSubtractMutator>();
