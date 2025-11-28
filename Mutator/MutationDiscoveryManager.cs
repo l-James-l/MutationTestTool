@@ -1,6 +1,7 @@
 ﻿using Core.Interfaces;
 using Microsoft.CodeAnalysis;
 using Models;
+using Models.Enums;
 using Models.Events;
 using Mutator.MutationImplementations;
 using Serilog;
@@ -64,7 +65,10 @@ public class MutationDiscoveryManager : IMutationRunInitiator, IMutationDiscover
                
                 SyntaxTree mutatedTree = tree.WithRootAndOptions(mutatedRoot, tree.Options);
 
-                RediscoverMutations(tree, mutatedTree, tempDiscoveredMutations, documentId);
+                // By applying the document ID here, we remove the need for the recrsion to be aware of the document its traversing.
+                tempDiscoveredMutations.ForEach(mutation => mutation.Document = documentId);
+                DiscoveredMutations.AddRange(tempDiscoveredMutations);
+                RediscoverMutationsInTree(mutatedRoot);
 
                 ApplyDiscoveredMutationsToDocument(documentId, mutatedRoot);
             }
@@ -87,59 +91,25 @@ public class MutationDiscoveryManager : IMutationRunInitiator, IMutationDiscover
     /// final mutated tree, so we need to rediscover them and where they are.
     /// This does mean we are traversing each file twice, but oh well, cant really do anything about it I dont think...
     /// </summary>
-    public void RediscoverMutations(SyntaxTree origionalTree, SyntaxTree mutatedTree, List<DiscoveredMutation> mutations, DocumentId documentId)
+    public void RediscoverMutationsInTree(SyntaxNode syntaxNode)
     {
-        // When weve removed a mutation because it caused the build to fail, none of out mutation references in that file will be correct any more,
-        // so we need to once again, rediscover them all. So get rid of all our mutation for the file and go again.
-        DiscoveredMutations.RemoveAll(x => x.Document == documentId);
-        List<DiscoveredMutation> rediscoveredMutations = new();
-        
-        TraverseSyntaxNodeForRediscovery(mutatedTree.GetRoot(), mutations, rediscoveredMutations);
-
-        if (mutations.Count > 0)
+        if (DiscoveredMutations.FirstOrDefault(x => syntaxNode.HasAnnotation(x.ID)) is { MutatedNode: not null } rediscoveredMutation)
         {
-            Log.Error("Could not rediscover mutations in {fileName}. Mutations: {mutations}", origionalTree.FilePath, mutations);
-        }
-
-        // By applying the document ID here, we remove the need for the recrsion to be aware of the document its traversing.
-        // By assigning the line span here, we ensure that its based on the entire mutated tree, and ensures further mutations dont move it.
-        // We also now have a reference to the node in the fully mutated tree
-        foreach (DiscoveredMutation mutation in rediscoveredMutations)
-        {
-            DiscoveredMutations.Add(new DiscoveredMutation
+            //Update the mutated node to the node in the actual mutated tree.
+            rediscoveredMutation.MutatedNode = syntaxNode;
+            //Only update the status to availble if it was previously 'Discovered' to avoid making removed mutations show as available.
+            if (rediscoveredMutation.Status == MutantStatus.Discovered)
             {
-                ID = mutation.ID,
-                MutatedNode = mutation.MutatedNode,
-                OriginalNode = mutation.OriginalNode,
-                LineSpan = mutatedTree.GetLocation(mutation.MutatedNode.Span).GetLineSpan(),
-                Document = documentId
-            });
-        }
-    }
-
-    private void TraverseSyntaxNodeForRediscovery(SyntaxNode syntaxNode, List<DiscoveredMutation> mutations, List<DiscoveredMutation> rediscoveredMutations)
-    {
-        if (mutations.FirstOrDefault(x => syntaxNode.HasAnnotation(x.ID)) is { MutatedNode: not null } rediscoveredMutation)
-        {
-            rediscoveredMutations.Add(new DiscoveredMutation
-            {
-                ID = rediscoveredMutation.ID,
-                OriginalNode = rediscoveredMutation.OriginalNode,
-                MutatedNode = syntaxNode,
-            });
-            mutations.Remove(rediscoveredMutation); // Remove it so we dont accidentally discover it multiple times.
-        }
-
-        // If weve found all the mutations then dont need to keep going.
-        if (mutations.Count == 0)
-        {
-            return;
+                rediscoveredMutation.Status = MutantStatus.Available;
+            }
+            // By assigning the line span here, we ensure that its based on the entire mutated tree.
+            rediscoveredMutation.LineSpan = syntaxNode.SyntaxTree.GetLocation(syntaxNode.Span).GetLineSpan();
         }
 
         IEnumerable<SyntaxNode> children = syntaxNode.ChildNodes();
         foreach (SyntaxNode child in children)
         {
-            TraverseSyntaxNodeForRediscovery(child, mutations, rediscoveredMutations);
+            RediscoverMutationsInTree(child);
         }
     }
 
@@ -190,12 +160,7 @@ public class MutationDiscoveryManager : IMutationRunInitiator, IMutationDiscover
             {
                 (SyntaxNode mutatedNode, SyntaxAnnotation id) = mutator.Mutate(node);
 
-                mutations.Add(new DiscoveredMutation
-                {
-                    ID = id,
-                    OriginalNode = node,
-                    MutatedNode = mutatedNode,
-                });
+                mutations.Add(new DiscoveredMutation(id, node, mutatedNode));
 
                 Log.Debug($"Successfully discovered {mutator.Mutation} mutation.");
                 return mutatedNode;

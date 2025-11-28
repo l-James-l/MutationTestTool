@@ -1,6 +1,8 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using Core.Interfaces;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Emit;
 using Models;
+using Models.Enums;
 using Models.Events;
 using Serilog;
 
@@ -10,11 +12,13 @@ public class MutatedProjectBuilder : IStartUpProcess
 {
     private readonly IMutationDiscoveryManager _mutationDiscovery;
     private readonly IEventAggregator _eventAggregator;
+    private readonly ISolutionProvider _solutionProvider;
 
-    public MutatedProjectBuilder(IMutationDiscoveryManager mutationDiscovery, IEventAggregator eventAggregator)
+    public MutatedProjectBuilder(IMutationDiscoveryManager mutationDiscovery, IEventAggregator eventAggregator, ISolutionProvider solutionProvider)
     {
         _mutationDiscovery = mutationDiscovery;
         _eventAggregator = eventAggregator;
+        _solutionProvider = solutionProvider;
     }
 
     public void StartUp()
@@ -29,18 +33,48 @@ public class MutatedProjectBuilder : IStartUpProcess
         foreach (IProjectContainer project in mutatedSolution.SolutionProjects)
         {
             int retryCount = 0;
-            bool dontRetry = false;
-            while (!EmitMutatedDll(project, out List<Diagnostic> failures) || !dontRetry)
+            bool doFinalRetry = false;
+            bool dllCreated = false;
+            while (retryCount < maxRetrys && !doFinalRetry)
             {
-                bool allActioned = FindAndRemoveMutationsCausingFailures(project, failures);
-                dontRetry = !allActioned || retryCount++ < maxRetrys;
+                retryCount++;
+                dllCreated = EmitMutatedDll(project, out List<Diagnostic> failures);
+                if (!dllCreated)
+                {
+                    bool anyFailuresActioned = FindAndRemoveMutationsCausingFailures(mutatedSolution, project, failures);
+                    if (!anyFailuresActioned)
+                    {
+                        Log.Warning("Build encountered errors that could not be resolved. Will make 1 final attempt.");
+                        doFinalRetry = true;
+                        break;
+                    }
+                }
+                else
+                {
+                    break;
+                }
             }
-
+            if (!dllCreated && doFinalRetry)
+            {
+                if (EmitMutatedDll(project, out List<Diagnostic> failures))
+                {
+                    Log.Information("Final attempt to create DLL for {proj} succeeded.", project.Name);
+                }
+                else
+                {
+                    Log.Error("Final attempt to created mutated DLL for {proj} failed. Will be unable to perform mutation testing. Examin logs for details.", project.Name);
+                    return;
+                }
+            }
+            else if (!dllCreated)
+            {
+                Log.Error("Max number of retrys reached for creating a mutated DLL for {proj}. Will be aunable to perform mutation testing.", project.Name);
+                return;
+            }
         }
 
         RestoreDependencies(mutatedSolution);
     }
-
 
     private bool EmitMutatedDll(IProjectContainer mutatedProject, out List<Diagnostic> failures)
     {
@@ -92,22 +126,23 @@ public class MutatedProjectBuilder : IStartUpProcess
     /// For each failure in the build diagnostics, we will remove the mutations which was introduced closest to that location.
     /// </summary>
     /// <returns>True if all failures were actioned, False if any failures were unable to be actioned.</returns>
-    private bool FindAndRemoveMutationsCausingFailures(IProjectContainer project, List<Diagnostic> failures)
+    private bool FindAndRemoveMutationsCausingFailures(ISolutionContainer mutatedSolution, IProjectContainer project, List<Diagnostic> failures)
     {
-        bool allActioned = true;
+        bool anyActioned = false;
         foreach (Diagnostic failure in failures)
         {
             if (!failure.Location.IsInSource || failure.Location.SourceSpan.IsEmpty)
             {
-                Log.Debug("failure not located in source code so cannot determine a mutation that caused it. {failure}", failure);
-                allActioned = false;
+                Log.Error("failure not located in source code so cannot determine a mutation that caused it. {failure}", failure);
                 continue;
             }
 
             FileLinePositionSpan failureLocation = failure.Location.GetLineSpan();
             if (project.DocumentsByPath.TryGetValue(failureLocation.Path, out DocumentId? document))
             {
-                IEnumerable<DiscoveredMutation> mutationsInFile = _mutationDiscovery.DiscoveredMutations.Where(x => x.Document == document);
+                Log.Information("Attempting to address build failures in file: {path}", failureLocation.Path);
+
+                IEnumerable<DiscoveredMutation> mutationsInFile = _mutationDiscovery.DiscoveredMutations.Where(x => x.Document == document && x.Status >= MutantStatus.Available);
 
                 //We want to find any mutation where the eror occurs partially or entirly inside it
                 //We do this by finding all mutations which 'start' before the error ends,
@@ -117,28 +152,59 @@ public class MutatedProjectBuilder : IStartUpProcess
                     mutationsInFile.Where(mutant => mutant.LineSpan.StartLinePosition.CompareTo(failureLocation.Span.End) <= 0);
                 IEnumerable<DiscoveredMutation> mutationsEndAfterErrorStart = 
                     mutationsInFile.Where(x => x.LineSpan.EndLinePosition.CompareTo(failureLocation.Span.Start) >= 0);
-                
+
                 IEnumerable<DiscoveredMutation> mutantsToRemove = mutationStartBeforeErrorEnd.Intersect(mutationsEndAfterErrorStart);
 
+                RemoveMutants(mutatedSolution, mutantsToRemove.ToList(), document);
+                anyActioned = true;
+
+                //TODO maybe it would be better to not remove all the mutants at once,
+                //and instead remove the most relevant one first (smallest span entirly inside?), and then if that fails, remove them all?
             }
             else
             {
-                Log.Debug("No document found that matches that path specified in the build faliure. {failure}", failureLocation.Path);
-                allActioned = false;
+                Log.Warning("No document found that matches that path specified in the build faliure. {failure}", failureLocation.Path);
                 continue;
             }
         }
 
-        return allActioned;
+        return anyActioned;
     }
 
-    private void RemoveMutants(IEnumerable<DiscoveredMutation> mutantsToRemove)
+    private void RemoveMutants(ISolutionContainer mutatedSolution, List<DiscoveredMutation> mutantsToRemove, DocumentId document)
     {
-        foreach (var mutant in mutantsToRemove)
-        {
-            SyntaxNode syntaxNode = mutant.MutatedNode.SyntaxTree.GetRoot().ReplaceNode(mutant.MutatedNode, mutant.OriginalNode);
+        Solution slnWithMutantsRemoved = mutatedSolution.Solution;
 
+        while (mutantsToRemove.Count > 0)
+        {
+            DiscoveredMutation? mutant = mutantsToRemove.FirstOrDefault();
+            //After removing mutants, our list of 'MutantsToRemove' 
+            mutant = _mutationDiscovery.DiscoveredMutations.FirstOrDefault(x => x.ID == mutant?.ID);
+            if (mutant is null)
+            {
+                Log.Warning("Attempted to remove a mutation that couldnt be found");
+                return;
+            }
+            mutantsToRemove.Remove(mutant);
+
+            mutant.Status = MutantStatus.CausedBuildError;
+
+            SyntaxNode newRoot = mutant.MutatedNode.SyntaxTree.GetRoot().ReplaceNode(mutant.MutatedNode, mutant.OriginalNode);
+            
+            slnWithMutantsRemoved = slnWithMutantsRemoved.WithDocumentSyntaxRoot(mutant.Document, newRoot);
+
+            _mutationDiscovery.RediscoverMutationsInTree(newRoot);
+
+            Log.Debug(mutant.OriginalNode.SyntaxTree.FilePath + " after removing mutants causing build errors:");
+            Log.Debug(newRoot.ToFullString());
         }
+
+
+        if (!_solutionProvider.SolutionContiner.Workspace.TryApplyChanges(slnWithMutantsRemoved))
+        {
+            Log.Error("Failed to remove mutants causing errors.");
+        }
+        _solutionProvider.SolutionContiner.RestoreProjects();
     }
 }
 

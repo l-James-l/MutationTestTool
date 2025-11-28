@@ -1,12 +1,24 @@
 ﻿using Microsoft.CodeAnalysis;
+using Models.Enums;
+using Models.Exceptions;
 
 namespace Models;
 
 /// <summary>
 /// Struct to contain data around a single discovered mutation
 /// </summary>
-public struct DiscoveredMutation
+public class DiscoveredMutation
 {
+    public DiscoveredMutation(SyntaxAnnotation id, SyntaxNode origional, SyntaxNode mutated)
+    {
+        ID = id;
+        OriginalNode = origional;
+        MutatedNode = mutated;
+        Status = MutantStatus.Discovered; // Default for new mutations
+        _lineSpan = null; // On creation, we dont know
+        _document = null; // On creation, we dont know
+    }
+
     /// <summary>
     /// The mutation identifier 
     /// </summary>
@@ -25,10 +37,25 @@ public struct DiscoveredMutation
     /// <summary>
     /// The ID of the document the mutation occured in.
     /// </summary>
-    public DocumentId Document { get; set; }
+    public DocumentId Document 
+    { 
+        get => _document ?? throw new PropertyNotAssignedException("Attempted to access mutation document before it assigned");
+        set => _document = value; 
+    }
+    private DocumentId? _document;
 
     /// <summary>
     /// The line and position on the line that the mutation occurs
     /// </summary>
-    public FileLinePositionSpan LineSpan { get; set;}
+    public FileLinePositionSpan LineSpan 
+    { 
+        get => _lineSpan ?? throw new PropertyNotAssignedException("Attempted to access mutation line span before it assigned"); 
+        set => _lineSpan = value; 
+    }
+    private FileLinePositionSpan? _lineSpan;
+
+    /// <summary>
+    /// Represents the current state of the mutation
+    /// </summary>
+    public MutantStatus Status { get; set; }
 }
