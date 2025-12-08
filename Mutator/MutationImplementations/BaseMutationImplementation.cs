@@ -8,7 +8,8 @@ namespace Mutator.MutationImplementations;
 public abstract class BaseMutationImplementation : IMutationImplementation
 {
     private const string NodeIdKey = "DarwingMutatedNodeIdentifier";
-
+    
+    public static string ActiveMutationIndex = "DarwingActiveMutaitonIndex";
     public static SyntaxAnnotation DontMutateAnnotation = new ("DarwingDoNotMutate");
 
     public abstract SpecifcMutation Mutation { get; }
@@ -68,7 +69,7 @@ public abstract class BaseMutationImplementation : IMutationImplementation
                                 default,
                                 SyntaxFactory.LiteralExpression(
                                     SyntaxKind.StringLiteralExpression,
-                                    SyntaxFactory.Literal("DarwingActiveMutaitonIndex")))
+                                    SyntaxFactory.Literal(ActiveMutationIndex)))
                     })
             )
         );
@@ -88,7 +89,7 @@ public abstract class BaseMutationImplementation : IMutationImplementation
         ConditionalExpressionSyntax mutationSwitcher = SyntaxFactory.ConditionalExpression(condition, mutatedNode, origionalNode);
         ParenthesizedExpressionSyntax parenthesizedSwticher = SyntaxFactory.ParenthesizedExpression(mutationSwitcher);
         
-        return ApplyDontMutateAnnotation(parenthesizedSwticher);
+        return ApplyDontMutateAnnotation(parenthesizedSwticher.NormalizeWhitespace());
     }
 
     /// <summary>

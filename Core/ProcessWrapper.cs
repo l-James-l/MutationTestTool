@@ -1,4 +1,4 @@
-﻿
+
 using System.Diagnostics;
 
 namespace Core;
@@ -46,7 +46,7 @@ public class ProcessWrapper : Process, IProcessWrapper
 
     public TimeSpan Duration { get; private set; } = TimeSpan.MaxValue;
 
-    public bool StartAndAwait(int? timeout)
+    public bool StartAndAwait(double? timeout)
     {
         if (timeout.HasValue)
         {
@@ -75,7 +75,7 @@ public interface IProcessWrapper
 {
     public bool StartAndAwait(TimeSpan timeout);
 
-    public bool StartAndAwait(int? timeout);
+    public bool StartAndAwait(double? timeout);
 
     bool Success { get; }
 

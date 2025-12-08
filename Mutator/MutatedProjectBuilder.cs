@@ -107,6 +107,8 @@ public class MutatedProjectBuilder : IStartUpProcess
         // For every project that has a dependency on another project that has been mutated, we need to replace the dll in that project.
         foreach (IProjectContainer project in _solutionProvider.SolutionContiner.AllProjects)
         {
+            Log.Information("Restoring dependencies for {project}.", project.Name);
+
             // Get the folder containg the projects build artifacts, which will include dll's of any other projects.
             string projectOutputDirectory = Path.GetDirectoryName(project.DllFilePath) ?? "";
 

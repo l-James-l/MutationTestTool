@@ -75,6 +75,7 @@ public class InitialTestRunnner : IStartUpProcess
             Log.Information("Initial test run successful, starting mutant discovery.");
             testRunInfo.WasSuccesful = true;
             testRunInfo.InitialRunDuration = testRun.Duration;
+            _eventAggregator.GetEvent<InitialTestRunCompleteEvent>().Publish(testRunInfo);
             _mutationRunManager.Run(testRunInfo);
         }
     }
