@@ -1,15 +1,88 @@
-﻿namespace GUI.ViewModels;
+﻿using GUI.Services;
+using Models.Events;
+using System.Windows.Input;
 
-public class MainWindowViewModel
+namespace GUI.ViewModels;
+
+public class MainWindowViewModel : ViewModelBase
 {
-    public DashBoardViewModel DashBoardViewModel { get; }
-    public SolutionExplorerViewModel SolutionExplorerViewModel { get; }
-    public SettingsViewModel SettingsViewModel { get; }
+    private DashBoardViewModel _dashBoardViewModel { get; }
+    private SolutionExplorerViewModel _solutionExplorerViewModel { get; }
+    private SettingsViewModel _settingsViewModel { get; }
+    private readonly IFileSelectorService _fileSelectorService;
+    private readonly IEventAggregator _eventAggregator;
 
-    public MainWindowViewModel()
+    /// <summary>
+    /// The mainwindow will contain the main structure for the UI.
+    /// Is responsible for managing naviagation between individual sub windows (namley the dashboard, solution explorer and settings page)
+    /// </summary>
+    public MainWindowViewModel(IFileSelectorService fileSelectorService, IEventAggregator eventAggregator)
     {
-        DashBoardViewModel = new DashBoardViewModel();
-        SolutionExplorerViewModel = new SolutionExplorerViewModel();
-        SettingsViewModel = new SettingsViewModel();
+        // TODO DI these
+        _dashBoardViewModel = new DashBoardViewModel();
+        _solutionExplorerViewModel = new SolutionExplorerViewModel();
+        _settingsViewModel = new SettingsViewModel();
+        
+        _currentViewModel = default!; //Make the compilar happy. Setting the tab index will set this.
+        SelectedTabIndex = 0;
+
+        _fileSelectorService = fileSelectorService;
+        _eventAggregator = eventAggregator;
+
+        SolutionPathSelection = new DelegateCommand(SelectSolutionPath);
+    }
+
+    /// <summary>
+    /// Set by the tab control in the view.
+    /// Since the tab control bar, and content area are seperated in the layout, 
+    /// we need to manually update the content area when a new tab is selected
+    /// </summary>
+    public int SelectedTabIndex
+    {
+        get => _selectedTabIndex;
+        set
+        {
+            _selectedTabIndex = value;
+            OnPropertyChanged();
+            UpdateCurrentView();
+        }
+    }
+    private int _selectedTabIndex;
+
+    /// <summary>
+    /// This is the view model actually displayed in the tab control content area.
+    /// Should be set by updating the SelectedTabIndex
+    /// </summary>
+    public object CurrentViewModel
+    {
+        get => _currentViewModel;
+        private set
+        {
+            _currentViewModel = value;
+            OnPropertyChanged();
+        }
+    }
+    private object _currentViewModel;
+
+    private void UpdateCurrentView()
+    {
+        CurrentViewModel = SelectedTabIndex switch
+        {
+            1 => _solutionExplorerViewModel,
+            2 => _settingsViewModel,
+            _ => _dashBoardViewModel
+        };
+    }
+    
+
+    public DelegateCommand SolutionPathSelection { get; }
+
+    private void SelectSolutionPath()
+    {
+        string? path = _fileSelectorService.OpenFileDialog("Solution Files (*.sln)|*.sln");
+        if (!string.IsNullOrEmpty(path))
+        {
+            _eventAggregator.GetEvent<SolutionPathProvidedEvent>().Publish(new SolutionPathProvidedPayload(path));
+        }
     }
 }

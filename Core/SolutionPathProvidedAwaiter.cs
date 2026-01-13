@@ -1,4 +1,4 @@
-﻿using Buildalyzer;
+using Buildalyzer;
 using Core.IndustrialEstate;
 using Core.Interfaces;
 using Microsoft.CodeAnalysis;
@@ -60,6 +60,8 @@ public class SolutionPathProvidedAwaiter : IStartUpProcess, ISolutionProvider
         }
         catch (Exception ex)
         {
+            _solutionContainer = null;
+            _mutationSettings.SolutionPath = "";
             Log.Error("Failed to load solution.");
             Log.Debug($"Failed to create AnalyzerManager for solution at location: {path}. {ex}");
         }
@@ -79,6 +81,8 @@ public class SolutionPathProvidedAwaiter : IStartUpProcess, ISolutionProvider
         }
         else
         {
+            _mutationSettings.SolutionPath = payload.SolutionPath;
+
             TryCreateManager(payload.SolutionPath);
         }
 

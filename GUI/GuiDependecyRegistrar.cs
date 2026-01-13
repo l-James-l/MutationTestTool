@@ -1,6 +1,7 @@
 ﻿using Core.Startup;
 using Microsoft.Extensions.DependencyInjection;
 using GUI.ViewModels;
+using GUI.Services;
 
 namespace GUI;
 
@@ -11,6 +12,18 @@ public class GuiDependecyRegistrar : DependencyRegistrar
     protected override void RegisterLocalDependencies()
     {
         Services.AddSingleton<MainWindow>();
+
+        RegisterViewModels();
+        RegisterServices();
+    }
+
+    private void RegisterServices()
+    {
+        Services.AddSingleton<IFileSelectorService, FileSelectorService>();
+    }
+
+    private void RegisterViewModels()
+    {
         Services.AddSingleton<MainWindowViewModel>();
         Services.AddSingleton<DashBoardViewModel>();
     }
