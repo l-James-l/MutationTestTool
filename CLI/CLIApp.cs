@@ -144,7 +144,7 @@ public class CLIApp
         if (_solutionProvider.IsAvailable)
         {
             Log.Warning($"Rebuilding the solution does not not reload changes made to the source code since the last load, but they will be included in the build. To indlude changes use command '{ReloadCommand}'");
-            _eventAggregator.GetEvent<RequestSolutionBuildEvent>().Publish();
+            _eventAggregator.GetEvent<SolutionLoadedEvent>().Publish();
         }
         else
         {

@@ -39,11 +39,11 @@ public class MutationDiscoveryManager : IMutationRunInitiator, IMutationDiscover
     public void Run(InitialTestRunInfo testRunInfo)
     {
         // A mutation run must:
-        // - traverse the syntax trees of each file to discover mutation oppertuniteis.
-        // - Once all potential mutations have been disovered, apply them from the bottom up as to reduce the chance
+        // - traverse the syntax trees of each file to discover mutation opportunities.
+        // - Once all potential mutations have been discovered, apply them from the bottom up as to reduce the chance
         //                  of mutations altering the tree in ways that prevent other discovered mutations.
         // - Once all mutations have been applied to a project, emit a new dll
-        // - If emmitting the dll causes build errors, find where the error occured and remove mutations there.
+        // - If emitting the dll causes build errors, find where the error occurred and remove mutations there.
         // - Update other projects that are dependent on the new dll
         // - Activate mutants 1 by 1 and run all tests (TODO only covering tests)
         // - Report if the mutant was killed or not
@@ -52,6 +52,7 @@ public class MutationDiscoveryManager : IMutationRunInitiator, IMutationDiscover
 
         _mutatedSolution = null;
         DiscoveredMutations.Clear();
+        bool sucess = false;
 
         foreach (IProjectContainer project in _solutionProvider.SolutionContiner.SolutionProjects)
         {
@@ -78,12 +79,13 @@ public class MutationDiscoveryManager : IMutationRunInitiator, IMutationDiscover
         {
             // Because we have wrapped the projects and precomputed properties around them, we need to update these to match the mutated solution.
             _solutionProvider.SolutionContiner.RestoreProjects();
-            _eventAggregator.GetEvent<BuildMutatedSolutionEvent>().Publish();
+            sucess = true;
         }
         else
         {
             Log.Error("Failed to created mutated solution");
         }
+        _eventAggregator.GetEvent<MutantDiscoveryCompleteEvent>().Publish(sucess);
     }
 
     /// <summary>

@@ -9,7 +9,7 @@ using System.Text.RegularExpressions;
 
 namespace Core;
 
-public class ProjectBuilder : IStartUpProcess, IWasBuildSuccessfull
+public class ProjectBuilder : IStartUpProcess
 {
     private IEventAggregator _eventAggrgator;
     private readonly ISolutionProvider _solutionProvider;
@@ -20,8 +20,6 @@ public class ProjectBuilder : IStartUpProcess, IWasBuildSuccessfull
     private TimeSpan _processTimeout = TimeSpan.FromSeconds(_defaultProcessTimeout);
 
     private readonly Regex _errorOutPutRegex = new(@"error (\S)*: ", RegexOptions.Compiled, TimeSpan.FromSeconds(1));
-
-    public bool WasLastBuildSuccessful { get; private set; } = false;
 
     public ProjectBuilder(IMutationSettings settings, IEventAggregator eventAggregator, ISolutionProvider solutionProvider,
         IProcessWrapperFactory processFactory)
@@ -34,12 +32,14 @@ public class ProjectBuilder : IStartUpProcess, IWasBuildSuccessfull
 
     public void StartUp()
     {
-        _eventAggrgator.GetEvent<RequestSolutionBuildEvent>().Subscribe(InitialBuild, ThreadOption.BackgroundThread, true);
+        _eventAggrgator.GetEvent<SolutionLoadedEvent>().Subscribe(InitialBuild, ThreadOption.BackgroundThread, true);
     }
 
     private void InitialBuild()
     {
-        WasLastBuildSuccessful = false;
+        bool wasBuildSuccessful = false;
+
+        // TODO replace with status tracker check
         if (!_solutionProvider.IsAvailable || _solutionProvider.SolutionContiner is null)
         {
             return;
@@ -51,16 +51,24 @@ public class ProjectBuilder : IStartUpProcess, IWasBuildSuccessfull
         Log.Information("Performing initial build");
         List<IProjectContainer> failedBuilds = new();
 
-        TryBuildAllProjects(failedBuilds);
-        
-        if (failedBuilds.Count > 0 && !RetryFailedProjectBuilds(failedBuilds))
+        try
         {
-            Log.Error("Solution build has failed. Cannot perform mutation testing.");
+            TryBuildAllProjects(failedBuilds);
+
+            if (failedBuilds.Count > 0 && !RetryFailedProjectBuilds(failedBuilds))
+            {
+                Log.Error("Solution build has failed. Cannot perform mutation testing.");
+            }
+            else
+            {
+                wasBuildSuccessful = true;
+                Log.Information("Building of solution succesful.");
+            }
         }
-        else
+        finally
         {
-            WasLastBuildSuccessful = true;
-            Log.Information("Building of solution succesful.");
+            // Ensure that the build completed event is always published, even if the build fails or an exception is thrown.
+            _eventAggrgator.GetEvent<SolutionBuildCompletedEvent>().Publish(wasBuildSuccessful);
         }
     }
 

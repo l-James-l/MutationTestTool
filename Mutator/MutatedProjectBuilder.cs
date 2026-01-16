@@ -23,19 +23,19 @@ public class MutatedProjectBuilder : IStartUpProcess
 
     public void StartUp()
     {
-        _eventAggregator.GetEvent<BuildMutatedSolutionEvent>().Subscribe(EmitAllChanges, ThreadOption.BackgroundThread, true);
+        _eventAggregator.GetEvent<MutantDiscoveryCompleteEvent>().Subscribe(EmitAllChanges, ThreadOption.BackgroundThread, true);
     }
 
     public void EmitAllChanges()
     {
-        const int maxRetrys = 5;
-        
+        const int maxRetries = 5;
+        bool allProjectsBuilt = true;
         foreach (IProjectContainer project in _solutionProvider.SolutionContiner.SolutionProjects)
         {
             int retryCount = 0;
             bool doFinalRetry = false;
             bool dllCreated = false;
-            while (retryCount < maxRetrys && !doFinalRetry)
+            while (retryCount < maxRetries && !doFinalRetry)
             {
                 retryCount++;
                 dllCreated = EmitMutatedDll(project, out List<Diagnostic> failures);
@@ -62,19 +62,21 @@ public class MutatedProjectBuilder : IStartUpProcess
                 }
                 else
                 {
+                    allProjectsBuilt = false;
                     Log.Error("Final attempt to created mutated DLL for {proj} failed. Will be unable to perform mutation testing. Examin logs for details.", project.Name);
-                    return;
+                    break;
                 }
             }
             else if (!dllCreated)
             {
-                Log.Error("Max number of retrys reached for creating a mutated DLL for {proj}. Will be aunable to perform mutation testing.", project.Name);
-                return;
+                allProjectsBuilt = false;
+                Log.Error("Max number of retries reached for creating a mutated DLL for {proj}. Will be unable to perform mutation testing.", project.Name);
+                break;
             }
         }
 
         RestoreDependencies();
-        _eventAggregator.GetEvent<TestMutatedSolutionEvent>().Publish();
+        _eventAggregator.GetEvent<TestMutatedSolutionEvent>().Publish(allProjectsBuilt);
     }
 
     private bool EmitMutatedDll(IProjectContainer mutatedProject, out List<Diagnostic> failures)

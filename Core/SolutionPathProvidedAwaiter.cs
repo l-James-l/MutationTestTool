@@ -97,7 +97,7 @@ public class SolutionPathProvidedAwaiter : IStartUpProcess, ISolutionProvider
         }
 
         // Always publish this at the end so that the most recent build info can be updated, including where the new solution path was invalid.
-        _eventAggregator.GetEvent<RequestSolutionBuildEvent>().Publish();
+        _eventAggregator.GetEvent<SolutionLoadedEvent>().Publish(IsAvailable);
     }
 
     private void DiscoverSourceCodeFiles()

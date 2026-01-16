@@ -17,7 +17,7 @@ public class ProjectBuilderTests
     private ISolutionProvider _solutionProvider;
     private IProcessWrapperFactory _processWrapperFactory;
 
-    private RequestSolutionBuildEvent _buildEvent;
+    private SolutionLoadedEvent _buildEvent;
     private Action _buildEventCallBack;
 
     [SetUp]
@@ -30,8 +30,8 @@ public class ProjectBuilderTests
 
         _projectBuilder = new ProjectBuilder(_mutationSettings, _eventAggregator, _solutionProvider, _processWrapperFactory);
 
-        _buildEvent = Substitute.For<RequestSolutionBuildEvent>();
-        _eventAggregator.GetEvent<RequestSolutionBuildEvent>().Returns(_buildEvent);
+        _buildEvent = Substitute.For<SolutionLoadedEvent>();
+        _eventAggregator.GetEvent<SolutionLoadedEvent>().Returns(_buildEvent);
 
         _buildEvent.When(x => x.Subscribe(Arg.Any<Action>(), Arg.Any<ThreadOption>(), Arg.Any<bool>()))
             .Do(x => _buildEventCallBack = x.Arg<Action>());

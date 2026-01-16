@@ -20,7 +20,7 @@ public class SolutionPathProvidedAwaiterTests
     private IMutationSettings _mutationSettings;
 
     private SolutionPathProvidedEvent _solutionPathProvided;
-    private RequestSolutionBuildEvent _requestSolutionBuild;
+    private SolutionLoadedEvent _requestSolutionBuild;
 
     private Action<SolutionPathProvidedPayload> _requestSolutionBuildCallback;
 
@@ -33,13 +33,13 @@ public class SolutionPathProvidedAwaiterTests
         _mutationSettings = Substitute.For<IMutationSettings>();
 
         _solutionPathProvided = Substitute.For<SolutionPathProvidedEvent>();
-        _requestSolutionBuild = new RequestSolutionBuildEvent();
+        _requestSolutionBuild = new SolutionLoadedEvent();
 
         _solutionPathProvided.When(x => x.Subscribe(Arg.Any<Action<SolutionPathProvidedPayload>>(), Arg.Any<ThreadOption>(), Arg.Any<bool>()))
             .Do(x => _requestSolutionBuildCallback = x.Arg<Action<SolutionPathProvidedPayload>>());
 
         _eventAggregator.GetEvent<SolutionPathProvidedEvent>().Returns(_solutionPathProvided);
-        _eventAggregator.GetEvent<RequestSolutionBuildEvent>().Returns(_requestSolutionBuild);
+        _eventAggregator.GetEvent<SolutionLoadedEvent>().Returns(_requestSolutionBuild);
 
         _awaiter = new SolutionPathProvidedAwaiter(_eventAggregator, _analyzerManagerFactory, _slnProfileDeserializer, _mutationSettings);
     }

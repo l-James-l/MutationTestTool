@@ -20,7 +20,7 @@ public class CLIAppTests
     private TextReader _originalIn;
     private ICancellationTokenWrapper _cancelationtoken;
     private SolutionPathProvidedEvent _solutionPathProvided;
-    private RequestSolutionBuildEvent _requestSolutionBuildEvent;
+    private SolutionLoadedEvent _requestSolutionBuildEvent;
     private InitiateTestRunEvent _initiateTestRunEvent;
 
     [SetUp]
@@ -34,7 +34,7 @@ public class CLIAppTests
         _buildSuccess = Substitute.For<IWasBuildSuccessfull>();
 
         _solutionPathProvided = Substitute.For<SolutionPathProvidedEvent>();
-        _requestSolutionBuildEvent = Substitute.For<RequestSolutionBuildEvent>();
+        _requestSolutionBuildEvent = Substitute.For<SolutionLoadedEvent>();
         _initiateTestRunEvent = Substitute.For<InitiateTestRunEvent>();
 
         _cancelationtoken = Substitute.For<ICancellationTokenWrapper>();
@@ -43,7 +43,7 @@ public class CLIAppTests
         _cancelationTokenFactory.Generate().Returns(_cancelationtoken);
 
         _eventAggregator.GetEvent<SolutionPathProvidedEvent>().Returns(_solutionPathProvided);
-        _eventAggregator.GetEvent<RequestSolutionBuildEvent>().Returns(_requestSolutionBuildEvent);
+        _eventAggregator.GetEvent<SolutionLoadedEvent>().Returns(_requestSolutionBuildEvent);
         _eventAggregator.GetEvent<InitiateTestRunEvent>().Returns(_initiateTestRunEvent);
 
         _app = new CLIApp(_eventAggregator, _mutationSettings, _solutionProvider, _cancelationTokenFactory, _buildSuccess);

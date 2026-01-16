@@ -36,17 +36,33 @@ public class InitialTestRunnner : IStartUpProcess
     /// </summary>
     private void InitialTestRun()
     {
-        InitialTestRunInfo testRunInfo = new InitialTestRunInfo();
-
-        //By checking we have a succesful build, we implicitly know that there is a solution loaded.
+        // TODO replace with status manager check
         if (!_wasBuildSuccessfull.WasLastBuildSuccessful)
         {
             Log.Error("Attempted to start a mutation run without a successful build");
             return;
         }
-        
+
         Log.Information("Starting initial test run before mutation begins.");
 
+        InitialTestRunInfo testRunInfo = new();
+        try
+        {
+            PerformTestRun(testRunInfo);
+        }
+        finally
+        {
+            // Ensure event is published even if the test run failed, and before proceeding to mutation run.
+            _eventAggregator.GetEvent<InitialTestRunCompleteEvent>().Publish(testRunInfo);
+            if (testRunInfo.WasSuccesful)
+            {
+                _mutationRunManager.Run(testRunInfo);
+            }
+        }
+    }
+
+    private void PerformTestRun(InitialTestRunInfo testRunInfo)
+    {
         ProcessStartInfo startInfo = new()
         {
             FileName = "dotnet",
@@ -74,8 +90,6 @@ public class InitialTestRunnner : IStartUpProcess
             Log.Information("Initial test run successful, starting mutant discovery.");
             testRunInfo.WasSuccesful = true;
             testRunInfo.InitialRunDuration = testRun.Duration;
-            _eventAggregator.GetEvent<InitialTestRunCompleteEvent>().Publish(testRunInfo);
-            _mutationRunManager.Run(testRunInfo);
         }
     }
 }

@@ -102,7 +102,7 @@ public class MainWindowViewModel : ViewModelBase
     public DelegateCommand RebuildCurrentSolution { get; }
     private void RebuildCurrentSolutionCommand()
     {
-        _eventAggregator.GetEvent<RequestSolutionBuildEvent>().Publish();
+        _eventAggregator.GetEvent<SolutionLoadedEvent>().Publish();
     }
 
     public DelegateCommand TestSolution { get; }

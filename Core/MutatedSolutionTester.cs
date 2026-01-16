@@ -42,7 +42,7 @@ public class MutatedSolutionTester : IStartUpProcess
     {
         if (_initialTestRunInfo == null)
         {
-            Log.Error("Initial test run info was never recieved. Cannot do mutation testing based on coverage or execution time. " +
+            Log.Error("Initial test run info was never received. Cannot do mutation testing based on coverage or execution time. " +
                 "All test will now be run for each mutation which may result in slower execution.");
         }
 
@@ -63,6 +63,7 @@ public class MutatedSolutionTester : IStartUpProcess
             Log.Information("Mutation testing complete. {survived} mutants survived out of {total} tested.", survivedMutants, testedMutantCount);
         }
 
+        _eventAggregator.GetEvent<MutatedSolutionTestingCompleteEvent>().Publish();
     }
 
     private bool DoInitialTestWithNoActiveMutants()
