@@ -16,22 +16,22 @@ public class InitialTestRunner : IMutationRunInitiator
     private readonly IMutationSettings _mutationSettings;
     private readonly IStatusTracker _statusTracker;
     private readonly IProcessWrapperFactory _processFactory;
-    private IMutationRunInitiator _mutationRunManager;
+    private IMutationDiscoveryManager _mutationDiscoveryManager;
 
     public InitialTestRunner(IEventAggregator eventAggregator, IMutationSettings mutationSettings, IStatusTracker statusTracker,
-        IProcessWrapperFactory processFactory, IMutationRunInitiator mutationRunManager)
+        IProcessWrapperFactory processFactory, IMutationDiscoveryManager mutationDiscoveryManager)
     {
         ArgumentNullException.ThrowIfNull(eventAggregator);
         ArgumentNullException.ThrowIfNull(mutationSettings);
         ArgumentNullException.ThrowIfNull(statusTracker);
         ArgumentNullException.ThrowIfNull(processFactory);
-        ArgumentNullException.ThrowIfNull(mutationRunManager);
+        ArgumentNullException.ThrowIfNull(mutationDiscoveryManager);
 
         _eventAggregator = eventAggregator;
         _mutationSettings = mutationSettings;
         _statusTracker = statusTracker;
         _processFactory = processFactory;
-        _mutationRunManager = mutationRunManager;
+        _mutationDiscoveryManager = mutationDiscoveryManager;
     }
     
     /// <summary>
@@ -57,7 +57,7 @@ public class InitialTestRunner : IMutationRunInitiator
             _eventAggregator.GetEvent<InitialTestRunCompleteEvent>().Publish(testRunInfo);
             if (testRunInfo.WasSuccesful)
             {
-                _mutationRunManager.Run();
+                _mutationDiscoveryManager.PerformMutationDiscovery();
             }
         }
     }

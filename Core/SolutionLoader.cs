@@ -5,7 +5,6 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Models;
 using Models.Enums;
-using Models.Events;
 using Models.SharedInterfaces;
 using Serilog;
 
@@ -18,27 +17,23 @@ namespace Core;
 ///     - Checking for a solution profile
 ///     - Performing an initial build
 /// </summary>
-public class SolutionLoader : ISolutionLoader, ISolutionProvider
+public class SolutionLoader : ISolutionLoader
 {
     private readonly IAnalyzerManagerFactory _analyzerManagerFactory;
     private readonly ISolutionProfileDeserializer _slnProfileDeserializer;
     private readonly IMutationSettings _mutationSettings;
     private readonly ISolutionBuilder _solutionBuilder;
     private readonly IStatusTracker _statusTracker;
-
-    //By making the public property the interface, we can mock the solution in testing.
-    public ISolutionContainer SolutionContainer => _solutionContainer ?? throw new InvalidOperationException("Attempted to retrieve a solution before one has been loaded.");
-    private SolutionContainer? _solutionContainer;
-
-    public bool IsAvailable => _solutionContainer != null;
+    private readonly ISolutionProvider _solutionProvider;
 
     public SolutionLoader(IAnalyzerManagerFactory analyzerManagerFactory, ISolutionProfileDeserializer slnProfileDeserializer,
-        IMutationSettings mutationSettings, ISolutionBuilder solutionBuilder, IStatusTracker statusTracker)
+        IMutationSettings mutationSettings, ISolutionBuilder solutionBuilder, IStatusTracker statusTracker, ISolutionProvider solutionProvider)
     {
         ArgumentNullException.ThrowIfNull(analyzerManagerFactory);
         ArgumentNullException.ThrowIfNull(slnProfileDeserializer);
         ArgumentNullException.ThrowIfNull(mutationSettings);
         ArgumentNullException.ThrowIfNull(solutionBuilder);
+        ArgumentNullException.ThrowIfNull(solutionProvider);
         ArgumentNullException.ThrowIfNull(statusTracker);
 
         _analyzerManagerFactory = analyzerManagerFactory;
@@ -46,6 +41,7 @@ public class SolutionLoader : ISolutionLoader, ISolutionProvider
         _mutationSettings = mutationSettings;
         _solutionBuilder = solutionBuilder;
         _statusTracker = statusTracker;
+        _solutionProvider = solutionProvider;
     }
 
     public void Load(string solutionPath)
@@ -63,23 +59,24 @@ public class SolutionLoader : ISolutionLoader, ISolutionProvider
         {
             Log.Error($"Solution file not found at location: {solutionPath}");
             _mutationSettings.SolutionPath = "";
-            _solutionContainer = null;
+            _statusTracker.FinishOperation(DarwingOperation.LoadSolution, false);
+            return;
         }
-        else
-        {
-            _mutationSettings.SolutionPath = solutionPath;
+        
+        _mutationSettings.SolutionPath = solutionPath;
 
-            TryCreateManager(solutionPath);
-        }
+        SolutionContainer? solutionContainer = TryCreateManager(solutionPath);
+        
 
-        if (_solutionContainer is not null)
+        if (solutionContainer is not null)
         {
             //Do this outside the try catch so that errors caught are only for loading the solution.
             //Deserializer shall handle its own exceptions.
             _slnProfileDeserializer.LoadSlnProfileIfPresent(solutionPath);
-            _solutionContainer.FindTestProjects(_mutationSettings);
-            DiscoverSourceCodeFiles();
-            _statusTracker.FinishOperation(DarwingOperation.LoadSolution, IsAvailable);
+            solutionContainer.FindTestProjects(_mutationSettings);
+            DiscoverSourceCodeFiles(solutionContainer);
+            _statusTracker.FinishOperation(DarwingOperation.LoadSolution, true);
+            _solutionProvider.NewSolution(solutionContainer);
             _solutionBuilder.InitialBuild();
         }
         else
@@ -88,27 +85,25 @@ public class SolutionLoader : ISolutionLoader, ISolutionProvider
         }
     }
 
-    private void TryCreateManager(string path)
+    private SolutionContainer? TryCreateManager(string path)
     {
         try
         {
             Log.Information("Creating analyzer for solution.");
             IAnalyzerManager analyzerManager = _analyzerManagerFactory.CreateAnalyzerManager(path);
-            _solutionContainer = new SolutionContainer(analyzerManager);
+            return new SolutionContainer(analyzerManager);
         }
         catch (Exception ex)
         {
-            _solutionContainer = null;
             _mutationSettings.SolutionPath = "";
             Log.Error("Failed to load solution.");
             Log.Debug($"Failed to create AnalyzerManager for solution at location: {path}. {ex}");
+            return null;
         }
     }
 
-    private void DiscoverSourceCodeFiles()
+    private void DiscoverSourceCodeFiles(SolutionContainer solutionContainer)
     {
-        ArgumentNullException.ThrowIfNull(_solutionContainer);
-
         EnumerationOptions enumerationOptions = new()
         {
             RecurseSubdirectories = true,
@@ -117,7 +112,7 @@ public class SolutionLoader : ISolutionLoader, ISolutionProvider
             AttributesToSkip = FileAttributes.System | FileAttributes.Hidden | FileAttributes.Compressed | FileAttributes.Temporary | FileAttributes.ReadOnly
         };
 
-        foreach (IProjectContainer project in _solutionContainer.SolutionProjects)
+        foreach (IProjectContainer project in solutionContainer.SolutionProjects)
         {
             Log.Information($"Loading source code files for {project.Name}");
 
@@ -131,13 +126,13 @@ public class SolutionLoader : ISolutionLoader, ISolutionProvider
                 Log.Information($"Discovered: {file}");
                 SyntaxTree syntaxTree = GetSyntaxTree(file);
 
-                _solutionContainer.Solution.GetDocumentId(syntaxTree);
-                if (_solutionContainer.Solution.GetDocumentId(syntaxTree) is { } documentId)
+                solutionContainer.Solution.GetDocumentId(syntaxTree);
+                if (solutionContainer.Solution.GetDocumentId(syntaxTree) is { } documentId)
                 {
                     project.UnMutatedSyntaxTrees.Add(documentId, syntaxTree);
                     project.DocumentsByPath.Add(file, documentId);
                 }
-                else if (_solutionContainer.Solution.GetDocumentIdsWithFilePath(syntaxTree.FilePath) is { Length: 1 } documentIds)
+                else if (solutionContainer.Solution.GetDocumentIdsWithFilePath(syntaxTree.FilePath) is { Length: 1 } documentIds)
                 {
                     project.UnMutatedSyntaxTrees.Add(documentIds.First(), syntaxTree);
                     project.DocumentsByPath.Add(file, documentIds.First());

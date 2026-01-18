@@ -8,7 +8,7 @@ using Serilog;
 
 namespace Mutator;
 
-public class MutatedProjectBuilder : IMutatedProjectBuilder
+public class MutatedProjectBuilder : IStartUpProcess
 {
     private readonly IMutationDiscoveryManager _mutationDiscovery;
     private readonly IEventAggregator _eventAggregator;
@@ -20,7 +20,6 @@ public class MutatedProjectBuilder : IMutatedProjectBuilder
         ISolutionProvider solutionProvider, IStatusTracker statusTracker, IMutatedSolutionTester mutatedSolutionTester)
     {
         ArgumentNullException.ThrowIfNull(mutationDiscovery);
-        ArgumentNullException.ThrowIfNull(eventAggregator);
         ArgumentNullException.ThrowIfNull(solutionProvider);
         ArgumentNullException.ThrowIfNull(statusTracker);
         ArgumentNullException.ThrowIfNull(mutatedSolutionTester);
@@ -32,7 +31,15 @@ public class MutatedProjectBuilder : IMutatedProjectBuilder
         _mutatedSolutionTester = mutatedSolutionTester;
     }
 
-    public void Build()
+    public void StartUp()
+    {
+        // We use an event here rather than a direct call to avoid a circular dependency with the mutation discovery manager.
+        // This means we need to use the keepSubscriberReferenceAlive parameter to ensure this instance is not
+        // garbage collected as only the container owns this class.
+        _eventAggregator.GetEvent<BuildMutatedSolution>().Subscribe(Build, true);
+    }
+
+    private void Build()
     {
         if (!_statusTracker.TryStartOperation(DarwingOperation.BuildingMutatedSolution))
         {

@@ -9,7 +9,7 @@ using Mutator.MutationImplementations;
 
 namespace Core.Startup;
 
-public abstract class DependencyRegistrar
+public abstract class DependencyRegistrar : IDisposable
 {
     protected readonly IServiceCollection Services;
     private ServiceProvider? _serviceProvider;
@@ -34,10 +34,18 @@ public abstract class DependencyRegistrar
 
         //Get the logger configuration to ensure it's created at startup, thus logging is available immediately.
         _serviceProvider.GetService<EstablishLoggerConfiguration>();
+        
         StartUpProcesses();
 
         return _serviceProvider;
     }
+
+    public void Dispose()
+    {
+        _serviceProvider?.Dispose();
+        GC.SuppressFinalize(this);
+    }
+
 
     protected virtual void RegisterLocalDependencies()
     {
@@ -51,9 +59,10 @@ public abstract class DependencyRegistrar
         Services.AddSingleton<IAnalyzerManagerFactory, AnalyzerManagerFactory>();
         Services.AddSingleton<IMutationSettings, MutationSettings>();
         Services.AddSingleton<ISolutionProfileDeserializer, SolutionProfileDeserializer>();
-        Services.RegisterManySingleton<SolutionBuilder>(); 
+        Services.AddSingleton<ISolutionBuilder, SolutionBuilder>(); 
         Services.AddSingleton<ICancelationTokenFactory, CancelationTokenFactory>();
-        Services.RegisterManySingleton<SolutionLoader>();
+        Services.AddSingleton<ISolutionLoader, SolutionLoader>();
+        Services.AddSingleton<ISolutionProvider, SolutionProvider>();
         Services.AddSingleton<IMutationRunInitiator, InitialTestRunner>();
         Services.AddSingleton<IProcessWrapperFactory, ProcessWrapperFactory>();
         Services.AddSingleton<IStatusTracker, StatusTracker>();
@@ -65,9 +74,9 @@ public abstract class DependencyRegistrar
 
     private void RegisterMutators()
     {
-        Services.RegisterManySingleton<MutationDiscoveryManager>(); //IMutationRunInitiator and IMutationDiscoveryManager
+        Services.AddSingleton<IMutationDiscoveryManager, MutationDiscoveryManager>(); 
         Services.AddSingleton<IMutationImplementationProvider, MutationImplementationProvider>();
-        Services.AddSingleton<IMutatedProjectBuilder, MutatedProjectBuilder>();
+        Services.AddSingleton<IStartUpProcess, MutatedProjectBuilder>();
         Services.RegisterManySingleton<MutatedSolutionTester>();
 
         //Specific implementations:

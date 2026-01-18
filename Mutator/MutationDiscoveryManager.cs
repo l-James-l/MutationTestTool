@@ -1,6 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
 using Models;
 using Models.Enums;
+using Models.Events;
 using Models.SharedInterfaces;
 using Mutator.MutationImplementations;
 using Serilog;
@@ -12,10 +13,10 @@ namespace Mutator;
 /// </summary>
 public class MutationDiscoveryManager : IMutationDiscoveryManager
 {
-    private ISolutionProvider _solutionProvider;
-    private IMutationImplementationProvider _mutationImplementationProvider;
+    private readonly ISolutionProvider _solutionProvider;
+    private readonly IMutationImplementationProvider _mutationImplementationProvider;
     private readonly IStatusTracker _statusTracker;
-    private readonly IMutatedProjectBuilder _mutatedProjectBuilder;
+    private readonly IEventAggregator _eventAggregator;
 
     /// <summary>
     /// All discovered mutations
@@ -25,17 +26,17 @@ public class MutationDiscoveryManager : IMutationDiscoveryManager
     private Solution? _mutatedSolution;
 
     public MutationDiscoveryManager(ISolutionProvider solutionProvider, IMutationImplementationProvider mutationImplementationProvider,
-        IStatusTracker statusTracker, IMutatedProjectBuilder mutatedProjectBuilder)
+        IStatusTracker statusTracker, IEventAggregator eventAggregator)
     {
         ArgumentNullException.ThrowIfNull(solutionProvider);
         ArgumentNullException.ThrowIfNull(mutationImplementationProvider);
         ArgumentNullException.ThrowIfNull(statusTracker);
-        ArgumentNullException.ThrowIfNull(mutatedProjectBuilder);
+        ArgumentNullException.ThrowIfNull(eventAggregator);
 
         _solutionProvider = solutionProvider;
         _mutationImplementationProvider = mutationImplementationProvider;
         _statusTracker = statusTracker;
-        _mutatedProjectBuilder = mutatedProjectBuilder;
+        _eventAggregator = eventAggregator;
     }
 
     public void PerformMutationDiscovery()
@@ -72,7 +73,7 @@ public class MutationDiscoveryManager : IMutationDiscoveryManager
             // Because we have wrapped the projects and precomputed properties around them, we need to update these to match the mutated solution.
             _solutionProvider.SolutionContainer.RestoreProjects();
             _statusTracker.FinishOperation(DarwingOperation.DiscoveringMutants, true);
-            _mutatedProjectBuilder.Build();
+            _eventAggregator.GetEvent<BuildMutatedSolution>().Publish();
         }
         else
         {
