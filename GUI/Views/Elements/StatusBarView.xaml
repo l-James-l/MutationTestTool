@@ -6,6 +6,8 @@
              xmlns:local="clr-namespace:GUI.Views.Elements"
              mc:Ignorable="d" 
              xmlns:cv="clr-namespace:GUI.Converters"
+             xmlns:vm="clr-namespace:GUI.ViewModels.ElementViewModels"
+             d:DataContext="{d:DesignInstance Type=vm:StatusBarViewModel}"
              d:DesignHeight="450" d:DesignWidth="800">
 
     <UserControl.Resources>

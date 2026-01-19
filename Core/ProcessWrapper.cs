@@ -98,7 +98,6 @@ public class ProcessWrapper : Process, IProcessWrapper
         {
             Kill(entireProcessTree: true);
         }
-        new 
 
         stopwatch.Stop();
         Duration = stopwatch.Elapsed;
