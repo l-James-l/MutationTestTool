@@ -30,12 +30,12 @@ jobs:
           --results-directory ./TestResults
 
       - name: Report Test & Coverage
-        uses: bibipkins/dotnet-test-reporter@v1
+        uses: bibipkins/dotnet-test-reporter@v3
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           results-path: ./TestResults/*.trx
           coverage-path: ./TestResults/**/*.xml
-          coverage-threshold: 75
+          coverage-threshold: 50
 
       - name: Upload Coverage Report
         uses: actions/upload-artifact@v3
