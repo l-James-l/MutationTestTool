@@ -30,7 +30,7 @@ jobs:
           --results-directory ./TestResults
 
       - name: Report Test & Coverage
-        uses: bibipkins/dotnet-test-reporter@v1
+        uses: bibipkins/dotnet-test-reporter@v1.4.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           results-path: ./TestResults/*.trx
