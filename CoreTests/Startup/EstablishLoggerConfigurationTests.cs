@@ -1,3 +1,5 @@
+using Core.Startup;
+
 namespace CoreTests.Startup;
 
 public class EstablishLoggerConfigurationTests

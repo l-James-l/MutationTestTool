@@ -146,24 +146,24 @@ public class SolutionBuilderTests
             project1
         });
 
-        IProcessWrapper process1 = Substitute.For<IProcessWrapper>();
-        IProcessWrapper process2 = Substitute.For<IProcessWrapper>();
-        IProcessWrapper process3 = Substitute.For<IProcessWrapper>();
-        _processWrapperFactory.Create(Arg.Is<ProcessStartInfo>(x => x.Arguments.Contains("build"))).Returns(process1);
-        _processWrapperFactory.Create(Arg.Is<ProcessStartInfo>(x => x.Arguments.Contains("clean"))).Returns(process2);
-        _processWrapperFactory.Create(Arg.Is<ProcessStartInfo>(x => x.Arguments.Contains("restore"))).Returns(process3);
-        process1.StartAndAwait(Arg.Any<TimeSpan>()).Returns(true);
-        process2.StartAndAwait(Arg.Any<TimeSpan>()).Returns(true);
-        process3.StartAndAwait(Arg.Any<TimeSpan>()).Returns(true);
-        process1.Success.Returns(false);
-        process2.Success.Returns(true);
-        process3.Success.Returns(true);
-        process1.Output.Returns([]);
-        process2.Output.Returns([]);
-        process3.Output.Returns([]);
-        process1.Errors.Returns([]);
-        process2.Errors.Returns([]);
-        process3.Errors.Returns([]);
+        IProcessWrapper buildProcess = Substitute.For<IProcessWrapper>();
+        IProcessWrapper cleanProcess = Substitute.For<IProcessWrapper>();
+        IProcessWrapper restoreProcess = Substitute.For<IProcessWrapper>();
+        _processWrapperFactory.Create(Arg.Is<ProcessStartInfo>(x => x.Arguments.Contains("build"))).Returns(buildProcess);
+        _processWrapperFactory.Create(Arg.Is<ProcessStartInfo>(x => x.Arguments.Contains("clean"))).Returns(cleanProcess);
+        _processWrapperFactory.Create(Arg.Is<ProcessStartInfo>(x => x.Arguments.Contains("restore"))).Returns(restoreProcess);
+        buildProcess.StartAndAwait(Arg.Any<TimeSpan>()).Returns(true);
+        cleanProcess.StartAndAwait(Arg.Any<TimeSpan>()).Returns(true);
+        restoreProcess.StartAndAwait(Arg.Any<TimeSpan>()).Returns(true);
+        buildProcess.Success.Returns(false);
+        cleanProcess.Success.Returns(true);
+        restoreProcess.Success.Returns(true);
+        buildProcess.Output.Returns([]);
+        cleanProcess.Output.Returns([]);
+        restoreProcess.Output.Returns([]);
+        buildProcess.Errors.Returns([]);
+        cleanProcess.Errors.Returns([]);
+        restoreProcess.Errors.Returns([]);
 
         //Act
         _projectBuilder.InitialBuild();
@@ -188,9 +188,9 @@ public class SolutionBuilderTests
             x.WorkingDirectory == "thi\\is\\a\\path" &&
             x.RedirectStandardError && x.RedirectStandardOutput && !x.UseShellExecute));
 
-        process1.Received(2).StartAndAwait(Arg.Any<TimeSpan>());
-        process2.Received(1).StartAndAwait(Arg.Any<TimeSpan>());
-        process3.Received(1).StartAndAwait(Arg.Any<TimeSpan>());
-        _statusTracker.Received(1).FinishOperation(DarwingOperation.BuildSolution, true);
+        buildProcess.Received(2).StartAndAwait(Arg.Any<TimeSpan>());
+        cleanProcess.Received(1).StartAndAwait(Arg.Any<TimeSpan>());
+        restoreProcess.Received(1).StartAndAwait(Arg.Any<TimeSpan>());
+        _statusTracker.Received(1).FinishOperation(DarwingOperation.BuildSolution, false);
     }
 }

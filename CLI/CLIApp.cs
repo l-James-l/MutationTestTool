@@ -146,17 +146,17 @@ public class CLIApp
     private void SolutionBuilderCommand(out string? response)
     {
         response = null;
-        if (_statusTracker.CheckStatus(DarwingOperation.LoadSolution) is OperationStates.Succeeded)
-        {
-            Log.Warning($"Rebuilding the solution does not not reload changes made to the source code since the last load, but they will be included in the build. To include changes use command '{ReloadCommand}'");
-            _solutionBuilder.InitialBuild();
-        }
-        else
+        if (_statusTracker.CheckStatus(DarwingOperation.LoadSolution) is not OperationStates.Succeeded)
         {
             response = $"No solution has been loaded. Use the '{LoadCommand}' command and then try again";
+            return;
         }
+        if (_statusTracker.CheckStatus(DarwingOperation.BuildSolution) is not OperationStates.NotStarted)
+        {
+            Log.Warning($"Rebuilding the solution does not not reload changes made to the source code since the last load, but they will be included in the build. To include changes use command '{ReloadCommand}'");
+        }
+        _solutionBuilder.InitialBuild();
     }
-
     private void InitiateTestSession(out string? response)
     {
         response = null;
