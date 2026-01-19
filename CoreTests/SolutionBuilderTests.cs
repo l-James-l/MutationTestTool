@@ -2,88 +2,85 @@
 using Core.IndustrialEstate;
 using Core.Interfaces;
 using Models;
+using Models.Enums;
 using Models.Events;
+using Models.SharedInterfaces;
 using NSubstitute;
 using System.Diagnostics;
+using System.Net.NetworkInformation;
 
 namespace CoreTests;
 
-public class ProjectBuilderTests
+public class SolutionBuilderTests
 {
     private SolutionBuilder _projectBuilder; //SUT
 
     private IMutationSettings _mutationSettings;
-    private IEventAggregator _eventAggregator;
     private ISolutionProvider _solutionProvider;
     private IProcessWrapperFactory _processWrapperFactory;
-
-    private SolutionLoadedEvent _buildEvent;
-    private Action _buildEventCallBack;
+    private IStatusTracker _statusTracker;
 
     [SetUp]
     public void SetUp()
     {
         _mutationSettings = Substitute.For<IMutationSettings>();
-        _eventAggregator = Substitute.For<IEventAggregator>();
         _solutionProvider = Substitute.For<ISolutionProvider>();
         _processWrapperFactory = Substitute.For<IProcessWrapperFactory>();
+        _statusTracker = Substitute.For<IStatusTracker>();
 
-        _projectBuilder = new SolutionBuilder(_mutationSettings, _eventAggregator, _solutionProvider, _processWrapperFactory);
-
-        _buildEvent = Substitute.For<SolutionLoadedEvent>();
-        _eventAggregator.GetEvent<SolutionLoadedEvent>().Returns(_buildEvent);
-
-        _buildEvent.When(x => x.Subscribe(Arg.Any<Action>(), Arg.Any<ThreadOption>(), Arg.Any<bool>()))
-            .Do(x => _buildEventCallBack = x.Arg<Action>());
+        _projectBuilder = new SolutionBuilder(_mutationSettings, _solutionProvider, _processWrapperFactory, _statusTracker);
     }
 
     [Test]
-    public void WhenStrartUp_ThenSubscribesToEvent()
-    {
-        //Arrange
-        //Act
-        _projectBuilder.StartUp();
-
-        //Assert
-        _buildEvent.Received(1).Subscribe(Arg.Any<Action>(), ThreadOption.BackgroundThread, true);
-        Assert.That(_buildEventCallBack, Is.Not.Null);
-    }
-
-    [Test]
-    public void GivenNoSolutionLoaded_WhenRecievesBuildReuest_ThenNoProcessesStarted()
+    public void GivenNoSolutionLoaded_WhenBuildSolution_ThenNoProcessesStarted()
     {
         //Arrange
         _solutionProvider.IsAvailable.Returns(false);
-        _projectBuilder.StartUp();
+        _statusTracker.TryStartOperation(DarwingOperation.BuildSolution).Returns(true);
 
         //Act
-        _buildEventCallBack.Invoke();
+        _projectBuilder.InitialBuild();
 
         //Assert
         _processWrapperFactory.Received(0).Create(Arg.Any<ProcessStartInfo>());
     }
 
     [Test]
-    public void GivenSolutionLoadedWithNoProjects_WhenRecievesBuildReuest_ThenNoProcessesStartedAndNoErrors()
+    public void GivenStatusTrackerSaysNo_WhenBuildSolution_ThenNoProcessesStarted()
     {
         //Arrange
+        _statusTracker.TryStartOperation(DarwingOperation.BuildSolution).Returns(false);
+
+        //Act
+        _projectBuilder.InitialBuild();
+
+        //Assert
+        _processWrapperFactory.Received(0).Create(Arg.Any<ProcessStartInfo>());
+    }
+
+    [Test]
+    public void GivenSolutionLoadedWithNoProjects_WhenReceivesBuildRequest_ThenNoProcessesStartedAndNoErrors()
+    {
+        //Arrange
+        _statusTracker.TryStartOperation(DarwingOperation.BuildSolution).Returns(true);
         _solutionProvider.IsAvailable.Returns(true);
         ISolutionContainer solutionContainer = Substitute.For<ISolutionContainer>();
         _solutionProvider.SolutionContainer.Returns(solutionContainer);
         solutionContainer.AllProjects.Returns(new List<IProjectContainer>());
-        _projectBuilder.StartUp();
 
         //Act
-        _buildEventCallBack.Invoke();
+        _projectBuilder.InitialBuild();
 
         //Assert
         _processWrapperFactory.Received(0).Create(Arg.Any<ProcessStartInfo>());
+        _statusTracker.Received(1).FinishOperation(DarwingOperation.BuildSolution, true);
     }
 
     [Test]
-    public void GivenSolutionLoadedWithProjects_WhenRecievesBuildReuest_ThenProcessesStartedForEachProject()
+    public void GivenSolutionLoadedWithProjects_WhenReceivesBuildRequest_ThenProcessesStartedForEachProject()
     {
         //Arrange
+        _statusTracker.TryStartOperation(DarwingOperation.BuildSolution).Returns(true);
         _solutionProvider.IsAvailable.Returns(true);
         ISolutionContainer solutionContainer = Substitute.For<ISolutionContainer>();
         _solutionProvider.SolutionContainer.Returns(solutionContainer);
@@ -110,10 +107,8 @@ public class ProjectBuilderTests
         process2.StartAndAwait(Arg.Any<TimeSpan>()).Returns(true);
         process2.Success.Returns(true);
 
-        _projectBuilder.StartUp();
-
         //Act
-        _buildEventCallBack.Invoke();
+        _projectBuilder.InitialBuild();
 
         //Assert
         _processWrapperFactory.Received(2).Create(Arg.Any<ProcessStartInfo>()); 
@@ -130,13 +125,14 @@ public class ProjectBuilderTests
             x.RedirectStandardError && x.RedirectStandardOutput && !x.UseShellExecute));
         process1.Received(1).StartAndAwait(Arg.Any<TimeSpan>());
         process2.Received(1).StartAndAwait(Arg.Any<TimeSpan>());
-        Assert.That(_projectBuilder.WasLastBuildSuccessful, Is.True);
+        _statusTracker.Received(1).FinishOperation(DarwingOperation.BuildSolution, true);
     }
 
     [Test]
-    public void GivenSolutionLoadedWithProjects_AndBuildFails_WhenRecievesBuildReuest_ThenCleanAndRestoreProcessStarted()
+    public void GivenSolutionLoadedWithProjects_AndBuildFails_WhenReceivesBuildRequest_ThenCleanAndRestoreProcessStarted()
     {
         //Arrange
+        _statusTracker.TryStartOperation(DarwingOperation.BuildSolution).Returns(true);
         _solutionProvider.IsAvailable.Returns(true);
         ISolutionContainer solutionContainer = Substitute.For<ISolutionContainer>();
         _solutionProvider.SolutionContainer.Returns(solutionContainer);
@@ -169,10 +165,8 @@ public class ProjectBuilderTests
         process2.Errors.Returns([]);
         process3.Errors.Returns([]);
 
-        _projectBuilder.StartUp();
-
         //Act
-        _buildEventCallBack.Invoke();
+        _projectBuilder.InitialBuild();
 
         //Assert
         _processWrapperFactory.Received(4).Create(Arg.Any<ProcessStartInfo>());
@@ -197,6 +191,6 @@ public class ProjectBuilderTests
         process1.Received(2).StartAndAwait(Arg.Any<TimeSpan>());
         process2.Received(1).StartAndAwait(Arg.Any<TimeSpan>());
         process3.Received(1).StartAndAwait(Arg.Any<TimeSpan>());
-        Assert.That(_projectBuilder.WasLastBuildSuccessful, Is.False);
+        _statusTracker.Received(1).FinishOperation(DarwingOperation.BuildSolution, true);
     }
 }

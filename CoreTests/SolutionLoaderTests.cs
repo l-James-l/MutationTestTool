@@ -10,19 +10,14 @@ using Serilog.Sinks.TestCorrelator;
 
 namespace CoreTests;
 
-public class SolutionPathProvidedAwaiterTests
+public class SolutionLoaderTests
 {
-    private SolutionLoader _awaiter; //SUT
+    private SolutionLoader _slnLoader; //SUT
 
     private IEventAggregator _eventAggregator;
     private IAnalyzerManagerFactory _analyzerManagerFactory;
     private ISolutionProfileDeserializer _slnProfileDeserializer;
     private IMutationSettings _mutationSettings;
-
-    private SolutionPathProvidedEvent _solutionPathProvided;
-    private SolutionLoadedEvent _requestSolutionBuild;
-
-    private Action<SolutionPathProvidedPayload> _requestSolutionBuildCallback;
 
     [SetUp]
     public void Setup()
@@ -41,7 +36,7 @@ public class SolutionPathProvidedAwaiterTests
         _eventAggregator.GetEvent<SolutionPathProvidedEvent>().Returns(_solutionPathProvided);
         _eventAggregator.GetEvent<SolutionLoadedEvent>().Returns(_requestSolutionBuild);
 
-        _awaiter = new SolutionLoader(_eventAggregator, _analyzerManagerFactory, _slnProfileDeserializer, _mutationSettings);
+        _slnLoader = new SolutionLoader(_eventAggregator, _analyzerManagerFactory, _slnProfileDeserializer, _mutationSettings);
     }
 
     [Test, Explicit("Fails on build sever due to local path. TODO to fix")]
@@ -49,7 +44,7 @@ public class SolutionPathProvidedAwaiterTests
     {
         // Arrange
         _analyzerManagerFactory.CreateAnalyzerManager(Arg.Any<string>()).Returns(Substitute.For<IAnalyzerManager>());
-        _awaiter.StartUp();
+        _slnLoader.StartUp();
 
         //TODO this would fail on a build server
         const string SolutionPath = @"C:\Users\THINKPAD\Documents\git\SimpleTestProject\SimpleTestProject.sln";
@@ -67,7 +62,7 @@ public class SolutionPathProvidedAwaiterTests
     public void WhenOnSolutionPathProvidedWithInvalidPath_ThenLogErrorAndDoNotCreateSolutionContainer()
     {
         // Arrange
-        _awaiter.StartUp();
+        _slnLoader.StartUp();
         Log.Logger = new LoggerConfiguration().WriteTo.TestCorrelator().CreateLogger();
         TestCorrelator.CreateContext();
 
