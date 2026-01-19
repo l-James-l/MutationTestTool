@@ -1,4 +1,5 @@
 ﻿using Models.Enums;
+using Models.Events;
 using Models.SharedInterfaces;
 using Serilog;
 
@@ -21,8 +22,14 @@ public class StatusTracker : IStatusTracker
         { DarwingOperation.BuildingMutatedSolution, OperationStates.NotStarted  },
         { DarwingOperation.TestMutants, OperationStates.NotStarted  }
     };
+    private readonly IEventAggregator _eventAggregator;
 
     private DarwingOperation _currentOperation => _operations.Single(kvp => kvp.Value == OperationStates.Ongoing).Key;
+
+    public StatusTracker(IEventAggregator eventAggregator)
+    {
+        _eventAggregator = eventAggregator;
+    }
 
     public OperationStates CheckStatus(DarwingOperation operation)
     {
@@ -38,6 +45,7 @@ public class StatusTracker : IStatusTracker
             _operations[DarwingOperation.Idle] = OperationStates.NotStarted;
             _operations[operation] = OperationStates.Ongoing;
             ResetStatesIfRegressing(operation);
+            _eventAggregator.GetEvent<DarwingOperationStatesChangedEvent>().Publish();
             return true;
         }
 
@@ -96,6 +104,7 @@ public class StatusTracker : IStatusTracker
             _operations[operation] = OperationStates.Failed;
         }
         _operations[DarwingOperation.Idle] = OperationStates.Ongoing;
+        _eventAggregator.GetEvent<DarwingOperationStatesChangedEvent>().Publish();
     }
 
     private bool ValidOperation(DarwingOperation operation)

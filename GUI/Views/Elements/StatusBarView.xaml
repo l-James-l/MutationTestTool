@@ -10,6 +10,8 @@
 
     <UserControl.Resources>
         <cv:HalfColumnMarginConverter x:Key="HalfColumnMarginConverter"/>
+        <cv:ProssesStateColourConverter x:Key="ProssesStateColourConverter"/>
+        <cv:CompletionPercentageToWidthConverter x:Key="CompletionPercentageToWidthConverter"/>
     </UserControl.Resources>
 
     <Grid Margin="20,85,20,301">
@@ -34,21 +36,15 @@
                 <Setter Property="Width" Value="18"/>
                 <Setter Property="Height" Value="18"/>
                 <Setter Property="CornerRadius" Value="9"/>
-                <Setter Property="Background" Value="#9CA3AF"/>
                 <Setter Property="HorizontalAlignment" Value="Center"/>
                 <Setter Property="VerticalAlignment" Value="Center"/>
-
-                <Style.Triggers>
-                    <DataTrigger Binding="{Binding}" Value="InProgress">
-                        <Setter Property="Background" Value="#F59E0B"/>
-                    </DataTrigger>
-                    <DataTrigger Binding="{Binding}" Value="Completed">
-                        <Setter Property="Background" Value="#22C55E"/>
-                    </DataTrigger>
-                    <DataTrigger Binding="{Binding}" Value="Failed">
-                        <Setter Property="Background" Value="#EF4444"/>
-                    </DataTrigger>
-                </Style.Triggers>
+                <Setter Property="Background">
+                    <Setter.Value>
+                        <Binding Path="Tag"
+                                 Converter="{StaticResource ProssesStateColourConverter}"
+                                 RelativeSource="{RelativeSource self}"/>
+                    </Setter.Value>
+                </Setter>
             </Style>
         </Grid.Resources>
 
@@ -59,7 +55,8 @@
             ClipToBounds="True">
 
             <!-- Gray baseline -->
-            <Border Height="2"
+            <Border Name="GrayBaseline"
+                Height="2"
                 Background="#9CA3AF"
                 VerticalAlignment="Center"
                 Margin="{Binding ActualWidth,
@@ -73,15 +70,24 @@
                 HorizontalAlignment="Left"
                 Margin="{Binding ActualWidth,
                             RelativeSource={RelativeSource AncestorType=Grid},
-                            Converter={StaticResource HalfColumnMarginConverter}}"
-                Width="{Binding ProgressWidth}"/>
+                            Converter={StaticResource HalfColumnMarginConverter}}">
+                <Border.Width>
+                    <MultiBinding Converter="{StaticResource CompletionPercentageToWidthConverter}">
+                        <!-- Grid width -->
+                        <Binding ElementName="GrayBaseline" Path="ActualWidth" />
+
+                        <!-- Percentage from VM -->
+                        <Binding Path="ProgressBarPercentage" />
+                    </MultiBinding>
+                </Border.Width>
+            </Border>
         </Grid>
 
-        <!-- STAGE 1 -->
+        <!-- STAGE 1: Load sln-->
         <Border Grid.Row="0"
             Grid.Column="0"
             Style="{StaticResource StageCircleStyle}"
-            DataContext="{Binding SolutionLoadedStatus}"/>
+            Tag="{Binding LoadSolution}"/>
 
         <TextBlock Grid.Row="1"
                 Grid.Column="0"
@@ -92,11 +98,11 @@
                 MaxWidth="120"
                 TextWrapping="Wrap"/>
 
-        <!-- STAGE 2 -->
+        <!-- STAGE 2 - build sln-->
         <Border Grid.Row="0"
             Grid.Column="1"
             Style="{StaticResource StageCircleStyle}"
-            DataContext="{Binding SolutionBuiltStatus}"/>
+            Tag="{Binding BuildOperationState}"/>
 
         <TextBlock Grid.Row="1"
                 Grid.Column="1"
@@ -111,7 +117,7 @@
         <Border Grid.Row="0"
             Grid.Column="2"
             Style="{StaticResource StageCircleStyle}"
-            DataContext="{Binding UnmutatedTestingStatus}"/>
+            Tag="{Binding InitialTestRunState}"/>
 
         <TextBlock Grid.Row="1"
                 Grid.Column="2"
@@ -126,7 +132,7 @@
         <Border Grid.Row="0"
             Grid.Column="3"
             Style="{StaticResource StageCircleStyle}"
-            DataContext="{Binding DiscoveringMutantsStatus}"/>
+            Tag="{Binding MutantDiscoveryState}"/>
 
         <TextBlock Grid.Row="1"
                 Grid.Column="3"
@@ -141,7 +147,7 @@
         <Border Grid.Row="0"
             Grid.Column="4"
             Style="{StaticResource StageCircleStyle}"
-            DataContext="{Binding BuildingMutatedSolutionStatus}"/>
+            Tag="{Binding BuildingMutatedSolutionState}"/>
 
         <TextBlock Grid.Row="1"
                 Grid.Column="4"
@@ -156,7 +162,7 @@
         <Border Grid.Row="0"
             Grid.Column="5"
             Style="{StaticResource StageCircleStyle}"
-            DataContext="{Binding TestingMutantsStatus}"/>
+            Tag="{Binding TestingMutantsState}"/>
 
         <TextBlock Grid.Row="1"
         Grid.Column="5"

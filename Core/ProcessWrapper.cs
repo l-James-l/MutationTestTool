@@ -60,14 +60,50 @@ public class ProcessWrapper : Process, IProcessWrapper
 
     public bool StartAndAwait(TimeSpan timeout)
     {
+        return StartAndAwaitAsync(timeout)
+            .GetAwaiter()
+            .GetResult();
+    }
+
+
+    private async Task<bool> StartAndAwaitAsync(TimeSpan timeout)
+    {
+        using CancellationTokenSource cts = new (timeout);
+
+        Stopwatch stopwatch = Stopwatch.StartNew();
+
         Start();
 
-        _processCompleted = WaitForExit(timeout);
-
-        if (_processCompleted)
+        if (StartInfo.RedirectStandardOutput)
         {
-            Duration = ExitTime - StartTime;
+            BeginOutputReadLine();
         }
-        return _processCompleted;
+
+        if (StartInfo.RedirectStandardError)
+        {
+            BeginErrorReadLine();
+        }
+
+        try
+        {
+            await WaitForExitAsync(cts.Token);
+            _processCompleted = true;
+        }
+        catch (OperationCanceledException)
+        {
+            
+        }
+
+        if (!HasExited)
+        {
+            Kill(entireProcessTree: true);
+        }
+        new 
+
+        stopwatch.Stop();
+        Duration = stopwatch.Elapsed;
+        
+        return ExitCode == 0;
     }
+
 }

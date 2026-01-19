@@ -96,30 +96,30 @@ public class MainWindowViewModel : ViewModelBase
     
 
     public DelegateCommand SolutionPathSelection { get; }
-    private void SelectSolutionPath()
+    private async void SelectSolutionPath()
     {
         string? path = _fileSelectorService.OpenFileDialog("Solution Files (*.sln)|*.sln");
         if (!string.IsNullOrEmpty(path))
         {
-            _solutionLoader.Load(path);
+            await Task.Run(() => _solutionLoader.Load(path));
         }
     }
 
     public DelegateCommand ReloadCurrentSolution { get; }
-    private void ReloadCurrentSolutionCommand()
+    private async void ReloadCurrentSolutionCommand()
     {
-        _solutionLoader.Load(_mutationSettings.SolutionPath);
+        await Task.Run(() => _solutionLoader.Load(_mutationSettings.SolutionPath));
     }
 
     public DelegateCommand RebuildCurrentSolution { get; }
-    private void RebuildCurrentSolutionCommand()
+    private async void RebuildCurrentSolutionCommand()
     {
-        _solutionBuilder.InitialBuild();
+        await Task.Run(_solutionBuilder.InitialBuild);
     }
 
     public DelegateCommand TestSolution { get; }
-    private void TestSolutionCommand()
+    private async void TestSolutionCommand()
     {
-        _mutationRunInitiator.Run();
+        await Task.Run(_mutationRunInitiator.Run);
     }
 }
