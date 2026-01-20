@@ -17,7 +17,7 @@ public class StatusBarViewModel : ViewModelBase
 
     private void OnOperationStatesChanged()
     {
-        LoadSolution = _statusTracker.CheckStatus(DarwingOperation.LoadSolution);
+        LoadSolutionState = _statusTracker.CheckStatus(DarwingOperation.LoadSolution);
         BuildOperationState = _statusTracker.CheckStatus(DarwingOperation.BuildSolution);
         InitialTestRunState = _statusTracker.CheckStatus(DarwingOperation.TestUnmutatedSolution);
         MutantDiscoveryState = _statusTracker.CheckStatus(DarwingOperation.DiscoveringMutants);
@@ -41,7 +41,7 @@ public class StatusBarViewModel : ViewModelBase
     {
         const float eachOperationPercentage = 0.2f; // Since there are 5 operations contributing to the progress bar
         float percentage = 0.0f;
-        if (LoadSolution is OperationStates.Succeeded)
+        if (LoadSolutionState is OperationStates.Succeeded)
         {
             percentage += eachOperationPercentage;
         }
@@ -73,18 +73,16 @@ public class StatusBarViewModel : ViewModelBase
         ProgressBarPercentage = percentage;
     }
 
-    public OperationStates LoadSolution
+    public OperationStates LoadSolutionState
     {
-        get => _loadSolution;
+        get => _loadSolutionState;
         set
         {
-            _loadSolution = value;
+            _loadSolutionState = value;
             OnPropertyChanged();
         }
     }
-
-
-    private OperationStates _loadSolution;
+    private OperationStates _loadSolutionState;
 
     public OperationStates BuildOperationState 
     {

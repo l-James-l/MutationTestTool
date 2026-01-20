@@ -42,7 +42,7 @@ public class StatusBarViewModelTests
         Dispatcher.CurrentDispatcher.InvokeAsync(_statesChangedEvent.Publish).Wait();
 
         //Assert
-        Assert.That(_statusBarViewModel.LoadSolution is OperationStates.NotStarted);
+        Assert.That(_statusBarViewModel.LoadSolutionState is OperationStates.NotStarted);
         Assert.That(_statusBarViewModel.BuildOperationState is OperationStates.NotStarted);
         Assert.That(_statusBarViewModel.InitialTestRunState is OperationStates.NotStarted);
         Assert.That(_statusBarViewModel.MutantDiscoveryState is OperationStates.NotStarted);
