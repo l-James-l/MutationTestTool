@@ -25,7 +25,7 @@ public class AnalyzeermanagerFactoryTests
         var manager = factory.CreateAnalyzerManager(slnPath);
 
         // Assert
-        Assert.IsNotNull(manager);
+        Assert.That(manager, Is.Not.Null);
         Assert.That(manager.GetType().Name, Is.EqualTo("AnalyzerManager"));
     }
 
@@ -40,7 +40,7 @@ public class AnalyzeermanagerFactoryTests
         var manager = factory.CreateAnalyzerManager(slnPath);
 
         // Assert
-        Assert.IsNotNull(manager);
+        Assert.That(manager, Is.Not.Null);
         Assert.That(manager.GetType().Name, Is.EqualTo("AnalyzerManager"));
     }
 }

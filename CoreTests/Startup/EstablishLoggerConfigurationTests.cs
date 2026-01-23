@@ -38,21 +38,21 @@ public class EstablishLoggerConfigurationTests
     {
         // Arrange
         // Ensure no Log or Logs directories exist
-        Assert.IsFalse(Directory.Exists(Path.Combine(_tempDir, "Log")));
+        Assert.That(Directory.Exists(Path.Combine(_tempDir, "Log")), Is.False);
 
         // Act & Assert - constructor should not throw
         Assert.DoesNotThrow(() => new EstablishLoggerConfiguration());
 
         var logsDir = Path.Combine(_tempDir, "Logs");
-        Assert.IsTrue(Directory.Exists(logsDir));
+        Assert.That(Directory.Exists(logsDir), Is.True);
 
         var files = Directory.GetFiles(logsDir, "Log-*.txt");
-        Assert.IsNotEmpty(files);
+        Assert.That(files, Is.Not.Empty);
 
         var filePath = files[0];
-        Assert.IsTrue(File.Exists(filePath));
+        Assert.That(File.Exists(filePath), Is.True);
         var length = new FileInfo(filePath).Length;
-        Assert.Greater(length, 0, "Log file should not be empty");
+        Assert.That(length, Is.GreaterThan(0), "Log file should not be empty");
     }
 
     [Test]
@@ -96,6 +96,6 @@ public class EstablishLoggerConfigurationTests
         // Ensure the remaining files are the newest ones (i.e., not the oldest existing files)
         // The oldest existing file (Log-old-1) should have been deleted
         bool oldestExists = finalFiles.Any(f => Path.GetFileName(f).Contains("Log-old-1"));
-        Assert.IsFalse(oldestExists, "The oldest log file should have been deleted");
+        Assert.That(oldestExists, Is.False, "The oldest log file should have been deleted");
     }
 }

@@ -29,7 +29,7 @@ public class SolutionProviderTests
         var isAvailable = _solutionProvider.IsAvailable;
      
         // Assert
-        Assert.IsFalse(isAvailable);
+        Assert.That(isAvailable, Is.False);
     }
 
     [Test]
@@ -43,7 +43,7 @@ public class SolutionProviderTests
         var isAvailable = _solutionProvider.IsAvailable;
         
         // Assert
-        Assert.IsTrue(isAvailable);
+        Assert.That(isAvailable, Is.True);
         Assert.That(_solutionProvider.SolutionContainer, Is.SameAs(mockSolution));
     }
 }
