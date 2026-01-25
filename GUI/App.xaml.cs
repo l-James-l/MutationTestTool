@@ -14,7 +14,7 @@ public partial class App : Application
     {
         base.OnStartup(e);
         
-        IServiceProvider serviceProvider = new GuiDependecyRegistrar(new ServiceCollection()).Build();
+        IServiceProvider serviceProvider = new GuiDependencyRegistrar(new ServiceCollection()).Build();
 
         // This allows viewing of backend logs in real time when configured from launch settings
         if (e.Args.Length > 0 && e.Args[0] == "--console")

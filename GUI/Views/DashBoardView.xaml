@@ -4,7 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:GUI.Views"
-             xmlns:evm="clr-namespace:GUI.ViewModels.ElementViewModels"
+             xmlns:evm="clr-namespace:GUI.ViewModels.DashBoardElements"
              xmlns:vm="clr-namespace:GUI.ViewModels"
              xmlns:views="clr-namespace:GUI.Views.Elements"
              mc:Ignorable="d" 
@@ -14,6 +14,9 @@
     <UserControl.Resources>
         <DataTemplate DataType="{x:Type evm:StatusBarViewModel}">
             <views:StatusBarView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type evm:SummaryCountsViewModel}">
+            <views:SummaryCountsView/>
         </DataTemplate>
         <DataTemplate DataType="{x:Type evm:MutationScoreByProjectViewModel}">
             <views:MutationScoreByProjectView/>
@@ -25,10 +28,12 @@
             <RowDefinition Height="Auto"></RowDefinition>
             <RowDefinition Height="Auto"></RowDefinition>
             <RowDefinition Height="Auto"></RowDefinition>
+            <RowDefinition Height="Auto"></RowDefinition>
         </Grid.RowDefinitions>
         
         <TextBlock Grid.Row="0" FontWeight="SemiBold" FontSize="26">DashBoard</TextBlock>
         <ContentControl Grid.Row="1" Content="{Binding StatusBarViewModel}" Margin="0,25,0,25" />
-        <ContentControl Grid.Row="2" Content="{Binding MutationScoreByProjectViewModel}" Margin="0,25,0,25" />
+        <ContentControl Grid.Row="2" Content="{Binding SummaryCountsViewModel}" Margin="0,25,0,25" />
+        <ContentControl Grid.Row="3" Content="{Binding MutationScoreByProjectViewModel}" Margin="0,25,0,25" />
     </Grid>
 </UserControl>

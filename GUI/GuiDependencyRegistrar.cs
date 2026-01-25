@@ -2,13 +2,13 @@
 using Microsoft.Extensions.DependencyInjection;
 using GUI.ViewModels;
 using GUI.Services;
-using GUI.ViewModels.ElementViewModels;
+using GUI.ViewModels.DashBoardElements;
 
 namespace GUI;
 
-public class GuiDependecyRegistrar : DependencyRegistrar
+public class GuiDependencyRegistrar : DependencyRegistrar
 {
-    public GuiDependecyRegistrar(IServiceCollection serviceCollection) : base(serviceCollection) { }
+    public GuiDependencyRegistrar(IServiceCollection serviceCollection) : base(serviceCollection) { }
 
     protected override void RegisterLocalDependencies()
     {
@@ -31,5 +31,6 @@ public class GuiDependecyRegistrar : DependencyRegistrar
         Services.AddSingleton<ISolutionExplorerViewModel, SolutionExplorerViewModel>();
         Services.AddSingleton<StatusBarViewModel>();
         Services.AddSingleton<MutationScoreByProjectViewModel>();
+        Services.AddSingleton<SummaryCountsViewModel>();
     }
 }

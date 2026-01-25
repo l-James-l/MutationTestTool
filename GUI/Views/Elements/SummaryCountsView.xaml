@@ -1,0 +1,80 @@
+﻿<UserControl x:Class="GUI.Views.Elements.SummaryCountsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:GUI.Views.Elements"
+             xmlns:vm="clr-namespace:GUI.ViewModels.DashBoardElements"
+             mc:Ignorable="d" 
+             d:DataContext="{d:DesignInstance Type=vm:SummaryCountsViewModel}">
+
+    <UserControl.Resources>
+        <!-- Template for displaying each card -->
+        <DataTemplate x:Name="StatCard" DataType="{x:Type vm:MutationStatCardViewModel}">
+            <Border Padding="16"
+                    CornerRadius="8"
+                    BorderBrush="Black"
+                    BorderThickness="1"
+                    Margin="6">
+
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Header row -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Title (left) -->
+                        <TextBlock Grid.Column="0"
+                                   Text="{Binding Title}"
+                                   FontSize="12"
+                                   Opacity="0.7"
+                                   VerticalAlignment="Top"/>
+
+                        <!-- Icon (top right) -->
+                        <TextBlock Grid.Column="1"
+                                   Text="{Binding Icon}"
+                                   Foreground="{Binding IconBrush}"
+                                   FontWeight="Bold"
+                                   HorizontalAlignment="Right"
+                                   VerticalAlignment="Top"/>    
+                    </Grid>
+
+                    <!-- Main value -->
+                    <TextBlock Grid.Row="1"
+                               Text="{Binding ValueString}"
+                               FontSize="28"
+                               FontWeight="SemiBold"
+                               Margin="0,8,0,0"/>
+
+                    <!-- Subtitle -->
+                    <TextBlock Grid.Row="2"
+                               Text="{Binding Subtitle}"
+                               Margin="0,6,0,0"
+                               Opacity="0.7"/>  
+                </Grid>
+            </Border>
+        </DataTemplate>
+    </UserControl.Resources>
+    
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <ContentControl Grid.Column="0" Content="{Binding TotalMutationCount}"/>
+        <ContentControl Grid.Column="1" Content="{Binding KilledMutationCount }"/>
+        <ContentControl Grid.Column="2" Content="{Binding SurvivedMutationCount}"/>
+        <ContentControl Grid.Column="3" Content="{Binding MutationScore}"/>
+    </Grid>
+</UserControl>
