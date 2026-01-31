@@ -20,6 +20,13 @@ public abstract class SolutionTreeNode
     /// </summary>
     public string FullPath { get; }
 
+    /// <summary>
+    /// Whether this node is currently selected in the tree view.
+    /// Only FileNodes can be selected.
+    /// Virtual to allow FileNode to override the setter to notify the owning vm.
+    /// </summary>
+    public virtual bool IsSelected { get; set; } = false;
+
     protected SolutionTreeNode(string fullPath)
     {
         ArgumentNullException.ThrowIfNull(fullPath);
@@ -36,7 +43,7 @@ public sealed class FileNode : SolutionTreeNode
     /// <summary>
     /// Is this node the currently selected file.
     /// </summary>
-    public bool IsSelected
+    public override bool IsSelected
     {
         get => field;
         set

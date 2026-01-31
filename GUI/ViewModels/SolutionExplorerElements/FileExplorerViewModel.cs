@@ -28,11 +28,27 @@ public class FileExplorerViewModel : ViewModelBase
     /// The full path of the currently selected file.
     /// Null if no file has been selected yet
     /// </summary>
-    public string? SelectFilePath 
-    { 
+    public string? SelectFilePath
+    {
         get;
-        set => SetProperty(ref field, value); 
+        set
+        {
+            string? prevValue = field;
+            SetProperty(ref field, value);
+            if (prevValue != value && value is not null)
+            {
+                SelectedFileChangedCallBack?.Invoke(value);
+            }
+        }
     }
+
+    /// <summary>
+    /// Gets or sets the callback action to invoke when the selected file changes.
+    /// </summary>
+    /// <remarks>Assign a method to this property to handle file selection changes. The callback receives the
+    /// path of the newly selected file as a parameter. If not set, no action is taken when the selected file
+    /// changes.</remarks>
+    public Action<string>? SelectedFileChangedCallBack {  get; set; }
 
     /// <summary>
     /// The tree that contains all the different folders, projects, and .cs files
