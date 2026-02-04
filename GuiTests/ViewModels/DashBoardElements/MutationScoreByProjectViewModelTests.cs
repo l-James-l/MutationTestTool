@@ -134,19 +134,19 @@ public class MutationScoreByProjectViewModelTests
         DocumentId doc = DocumentId.CreateFromSerialized(projectId, Guid.NewGuid());
         doc.ProjectId.Returns(projectId);
 
-        DiscoveredMutation mutation1 = new (id, SyntaxFactory.EmptyStatement(), SyntaxFactory.EmptyStatement(), _eventAggregator)
+        DiscoveredMutation mutation1 = new (id, SyntaxFactory.EmptyStatement(), SyntaxFactory.EmptyStatement(), SyntaxFactory.EmptyStatement(), _eventAggregator, 0, 0)
         {
             Document = doc,
             Status = MutantStatus.Killed,
         };
 
-        DiscoveredMutation mutation2 = new (new SyntaxAnnotation(), SyntaxFactory.EmptyStatement(), SyntaxFactory.EmptyStatement(), _eventAggregator)
+        DiscoveredMutation mutation2 = new (new SyntaxAnnotation(), SyntaxFactory.EmptyStatement(), SyntaxFactory.EmptyStatement(), SyntaxFactory.EmptyStatement(), _eventAggregator, 0 ,0)
         {
             Document = doc,
             Status = MutantStatus.Survived
         };
 
-        DiscoveredMutation mutation3 = new (new SyntaxAnnotation(), SyntaxFactory.EmptyStatement(), SyntaxFactory.EmptyStatement(), _eventAggregator)
+        DiscoveredMutation mutation3 = new (new SyntaxAnnotation(), SyntaxFactory.EmptyStatement(), SyntaxFactory.EmptyStatement(), SyntaxFactory.EmptyStatement(), _eventAggregator, 0, 0)
         {
             Document = doc,
             Status = MutantStatus.CausedBuildError
@@ -168,7 +168,7 @@ public class MutationScoreByProjectViewModelTests
     {
         // Arrange
         SyntaxAnnotation id = new ();
-        DiscoveredMutation mutation = new(id, SyntaxFactory.EmptyStatement(), SyntaxFactory.EmptyStatement(), _eventAggregator);
+        DiscoveredMutation mutation = new(id, SyntaxFactory.EmptyStatement(), SyntaxFactory.EmptyStatement(), SyntaxFactory.EmptyStatement(), _eventAggregator, 0, 0);
         
         _mutationDiscoveryManager.DiscoveredMutations.Returns([mutation]);
 

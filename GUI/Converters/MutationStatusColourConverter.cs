@@ -10,12 +10,12 @@ class MutationStatusColourConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        if (value is not DiscoveredMutation mutation)
+        if (value is not MutantStatus status)
         {
             return Brushes.Red;
         }
 
-        return (mutation.Status) switch
+        return status switch
         {
             MutantStatus.Killed => Brushes.Green,
             MutantStatus.Survived => Brushes.Red,

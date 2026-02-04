@@ -89,7 +89,7 @@ public sealed class FileNode : SolutionTreeNode
             if (value)
             {
                 //Notify the owning vm
-                _vm.SelectFile = this;
+                _vm.SelectedFile = this;
             }
         }
     }

@@ -64,7 +64,7 @@ file class TestMutator1 : IMutationImplementation
 
     public Type RequiredNodeType => typeof(PostfixUnaryExpressionSyntax);
 
-    (SyntaxNode mutatedNode, SyntaxAnnotation identififer) IMutationImplementation.Mutate(SyntaxNode node)
+    public (SyntaxNode mutationSwitcher, SyntaxAnnotation identififer, SyntaxNode mutatedNode) Mutate(SyntaxNode node)
     {
         throw new NotImplementedException();
     }
@@ -80,7 +80,7 @@ file class TestMutator2 : IMutationImplementation
 
     public Type RequiredNodeType => typeof(BinaryExpressionSyntax);
 
-    (SyntaxNode mutatedNode, SyntaxAnnotation identififer) IMutationImplementation.Mutate(SyntaxNode node)
+    public (SyntaxNode mutationSwitcher, SyntaxAnnotation identififer, SyntaxNode mutatedNode) Mutate(SyntaxNode node)
     {
         throw new NotImplementedException();
     }

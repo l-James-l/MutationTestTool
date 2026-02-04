@@ -2,10 +2,10 @@
 using GUI.ViewModels.SolutionExplorerElements;
 using Microsoft.CodeAnalysis;
 using Models;
+using Models.Enums;
 using Models.Events;
 using System.Collections.ObjectModel;
 using System.IO;
-using System.Windows.Input;
 
 namespace GUI.ViewModels;
 
@@ -25,13 +25,9 @@ public class SolutionExplorerViewModel : ViewModelBase, ISolutionExplorerViewMod
         _eventAggregator = eventAggregator;
 
         fileExplorerViewModel.SelectedFileChangedCallBack += OnSelectedFileChanged;
-        SelectMutationCommand = new RelayCommand<DiscoveredMutation>(x =>
-        {
-            SelectedMutation = x;
-        });
 
-        _eventAggregator.GetEvent<MutationUpdated>().Subscribe(_ => OnPropertyChanged(nameof(FileDetails)), ThreadOption.UIThread, true, 
-            x => FileDetails.Any(line => line.MutationsOnLine.FirstOrDefault(m => x == m.ID) is not null));
+        _eventAggregator.GetEvent<MutationUpdated>().Subscribe(_ => OnPropertyChanged(nameof(SelectedLine)), ThreadOption.UIThread, true, 
+            x => SelectedLine is not null && SelectedLine.MutationsOnLine.Any(m => m.ID == x));
     }
 
     /// <summary>
@@ -40,13 +36,15 @@ public class SolutionExplorerViewModel : ViewModelBase, ISolutionExplorerViewMod
     public FileExplorerViewModel FileExplorerViewModel { get; }
 
     /// <summary>
-    /// Binding property for the name of the selected file.
+    /// Binding property for the name of the selected file, or if one is not selected, a string indicating that.
     /// </summary>
-    public string SelectedFileName 
+    public string SelectedFileHeader 
     { 
         get; 
         set => SetProperty(ref field, value); 
     } = _defaultFileDisplayHeader;
+
+    private FileNode? _selectedFileNode = null;
 
     /// <summary>
     /// Binding property for the contents of the selected file.
@@ -55,38 +53,45 @@ public class SolutionExplorerViewModel : ViewModelBase, ISolutionExplorerViewMod
     /// </summary>
     public ObservableCollection<LineDetails> FileDetails { get; } = [];
 
-    /// <summary>
-    /// Binding property for the currently selected mutation in the file.
-    /// </summary>
-    public DiscoveredMutation? SelectedMutation 
-    { 
-        get; 
-        set => SetProperty(ref field, value); 
+    public LineDetails? SelectedLine
+    {
+        get;
+        set => SetProperty(ref field, value);
     } = null;
-
-    public ICommand SelectMutationCommand { get; }
-
+    
     private void OnSelectedFileChanged(FileNode selectedFile)
     {
+        int selectedLineNumber = -1;
+        if (selectedFile == _selectedFileNode && SelectedLine is not null)
+        {
+            selectedLineNumber = SelectedLine.LineNumber;
+        }
+        SelectedLine = null;
         FileDetails.Clear();
-        SelectedMutation = null;
         string newFilePath = selectedFile.FullPath;
+        
         if (File.Exists(newFilePath))
         {
-            SelectedFileName = selectedFile.Name;
+            SelectedFileHeader = selectedFile.Name;
+            _selectedFileNode = selectedFile;
             IEnumerable<string> lines = File.ReadLines(newFilePath);
             List<LineDetails> lineDetails = [.. lines.Select((line, index) => new LineDetails
             {
                 SourceCode = line,
                 LineNumber = index + 1,
-                MutationsOnLine = [.. selectedFile.MutationInFile.Where(x => x.LineSpan.StartLinePosition.Line == index)]
+                MutationsOnLine = [.. selectedFile.MutationInFile.Where(x => x.LineSpan.StartLinePosition.Line == index && x.Status is not MutantStatus.CausedBuildError)]
             })];
 
             FileDetails.AddRange(lineDetails);
+
+            if (selectedLineNumber > -1)
+            {
+                SelectedLine = FileDetails.FirstOrDefault(x => x.LineNumber == selectedLineNumber);
+            }
         }
         else
         {
-            SelectedFileName = _defaultFileDisplayHeader;
+            SelectedFileHeader = _defaultFileDisplayHeader;
         }
     }
 }

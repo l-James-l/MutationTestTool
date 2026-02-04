@@ -30,7 +30,7 @@ public class SolutionExplorerViewModelTests
 
         _fileExplorerViewModel = new FileExplorerViewModel(_solutionProvider, _eventAggregator, _mutationDiscoveryManager);
         
-        _solutionExplorer = new SolutionExplorerViewModel(_fileExplorerViewModel);
+        _solutionExplorer = new SolutionExplorerViewModel(_fileExplorerViewModel, _eventAggregator);
     }
 
     [Test]
@@ -43,7 +43,7 @@ public class SolutionExplorerViewModelTests
     public void GivenFileSelected_WhenFileExplorerCallBackInvoked_ThenFileDetailsLoaded()
     {
         //Act
-        _fileExplorerViewModel.SelectFile = new FileNode(TestFilePath, _fileExplorerViewModel);
+        _fileExplorerViewModel.SelectedFile = new FileNode(TestFilePath, _fileExplorerViewModel);
 
         //Assert
         Assert.That(_solutionExplorer.FileDetails, Is.Not.Null.Or.Empty);
