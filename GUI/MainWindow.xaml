@@ -304,12 +304,13 @@
                 </Button>
             </StackPanel>
         </Grid>
-        <Border Grid.Row="3" Height="1"  Background="Gray" Margin="0, 2, 0, 15"/>
+        <Border Grid.Row="3" Height="1"  Background="Gray" Margin="0, 2, 0, 0"/>
 
-
-        <ContentControl Grid.Row="4"
-                        Content="{Binding CurrentViewModel}"
-                        Margin="25,0,25,0"/>
+        <Border Grid.Row="4" Background="#0F172A" Padding="0,15,0,0">
+            <ContentControl Content="{Binding CurrentViewModel}"
+                Margin="25,0,25,0"
+                Background="#0F172A"/>
+        </Border>
     </Grid>
 
 </Window>
