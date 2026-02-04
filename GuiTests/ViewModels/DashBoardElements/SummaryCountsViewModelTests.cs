@@ -163,7 +163,7 @@ public class SummaryCountsViewModelTests
 
     private DiscoveredMutation CreateMutation(MutantStatus status)
     {
-        DiscoveredMutation mutation = new(new SyntaxAnnotation(), SyntaxFactory.EmptyStatement(), SyntaxFactory.EmptyStatement(), _eventAggregator)
+        DiscoveredMutation mutation = new(new SyntaxAnnotation(), SyntaxFactory.EmptyStatement(), SyntaxFactory.EmptyStatement(), SyntaxFactory.EmptyStatement(), _eventAggregator, 0, 0)
         {
             Status = status
         };

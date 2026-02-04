@@ -6,7 +6,6 @@ using Models.Events;
 using Mutator;
 using Serilog;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.IO;
 
 namespace GUI.ViewModels.SolutionExplorerElements;
@@ -36,7 +35,7 @@ public class FileExplorerViewModel : ViewModelBase
     /// The file node for the currently selected file.
     /// Null if no file has been selected yet
     /// </summary>
-    public FileNode? SelectFile
+    public FileNode? SelectedFile
     {
         get;
         set
@@ -94,6 +93,11 @@ public class FileExplorerViewModel : ViewModelBase
         matchingFileNode.MutationCount = matchingFileNode.MutationInFile.Count(x => x.Status is not MutantStatus.CausedBuildError);
         matchingFileNode.KilledMutationCount = matchingFileNode.MutationInFile.Count(x => x.Status is MutantStatus.Killed);
         OnPropertyChanged(nameof(SolutionTree));
+
+        if (SelectedFile is not null &&  matchingFileNode == SelectedFile)
+        {
+            SelectedFileChangedCallBack?.Invoke(matchingFileNode);
+        }
     }
 
     private FileNode? FindFileNode(string filePath, IEnumerable<SolutionTreeNode> nodes)
