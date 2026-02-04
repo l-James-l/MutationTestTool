@@ -34,10 +34,22 @@
             <TextBlock Text="DashBoard" FontWeight="SemiBold" FontSize="26" Foreground="White"/>
             <TextBlock Text="Overview of testing" FontWeight="Light" FontSize="12" Foreground="LightGray"/>
         </StackPanel>
+        
         <Border Grid.Row="1" Background="#1f2939" CornerRadius="8" BorderBrush="LightGray" BorderThickness="0.5" Margin="5, 20, 5, 0">
-            <ContentControl Content="{Binding StatusBarViewModel}" Margin="0,25,0,25" />
+            <StackPanel Orientation="Vertical">
+                <TextBlock Text="Progesssion" Foreground="White" FontWeight="SemiBold" FontSize="15" Margin="80, 25, 0,0 "/>
+                <ContentControl Content="{Binding StatusBarViewModel}" Margin="0,15,0,25" />
+            </StackPanel>
         </Border>
+        
         <ContentControl Grid.Row="2" Content="{Binding SummaryCountsViewModel}" Margin="0,25,0,25" />
-        <ContentControl Grid.Row="3" Content="{Binding MutationScoreByProjectViewModel}" Margin="0,25,0,25" />
+
+        <Border Grid.Row="3" Background="#1f2939" CornerRadius="8" BorderBrush="LightGray" BorderThickness="0.5" Margin="5, 5, 5, 0" Padding="5">
+            <StackPanel Orientation="Vertical">
+                <TextBlock Text="Mutation Score by Project" Foreground="White" FontWeight="SemiBold" FontSize="15" Margin="10, 10, 0,0 "/>
+                <ContentControl Grid.Row="3" Content="{Binding MutationScoreByProjectViewModel}" Margin="0,0,0,0" />
+            </StackPanel>
+        </Border>
+
     </Grid>
 </UserControl>
