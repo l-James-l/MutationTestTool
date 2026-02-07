@@ -51,7 +51,7 @@ public interface IMutationSettings
     /// <summary>
     /// List of any disabled mutation types.
     /// </summary>
-    public List<SpecifcMutation> DisabledMutationTypes { get; set; }
+    public List<SpecificMutation> DisabledMutationTypes { get; set; }
 
 
     /// <summary>

@@ -29,7 +29,7 @@ public class SolutionProfileData
     /// <summary>
     /// Allows enabling or disabling specific mutation types.
     /// </summary>
-    public List<SpecifcMutation> DisabledMutationTypes { get; set; } = [];
+    public List<SpecificMutation> DisabledMutationTypes { get; set; } = [];
 
     /// <summary>
     /// Class containing more general settings.

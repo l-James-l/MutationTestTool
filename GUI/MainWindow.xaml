@@ -25,7 +25,6 @@
         </DataTemplate>
     </Window.Resources>
 
-    <!--TODO Background="#1f2939"-->
     <Grid Background="#1f2939">
         <Grid.RowDefinitions>
             <!-- Title -->

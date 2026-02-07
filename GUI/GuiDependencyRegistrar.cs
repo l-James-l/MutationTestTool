@@ -43,5 +43,6 @@ public class GuiDependencyRegistrar : DependencyRegistrar
         Services.AddSingleton<ISettingsViewModel, SettingsViewModel>();
         Services.AddSingleton<ProjectTypeCollectionSettings>();
         Services.AddSingleton<GeneralSettingsViewModel>();
+        Services.AddSingleton<DisabledMutationTypesViewModel>();
     }
 }

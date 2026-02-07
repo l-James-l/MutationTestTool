@@ -56,7 +56,7 @@ public class MutationImplementationProviderTests
 
 file class TestMutator1 : IMutationImplementation
 {
-    public SpecifcMutation Mutation => throw new NotImplementedException();
+    public SpecificMutation Mutation => throw new NotImplementedException();
 
     public MutationCategory Category => throw new NotImplementedException();
 
@@ -72,7 +72,7 @@ file class TestMutator1 : IMutationImplementation
 
 file class TestMutator2 : IMutationImplementation
 {
-    public SpecifcMutation Mutation => throw new NotImplementedException();
+    public SpecificMutation Mutation => throw new NotImplementedException();
 
     public MutationCategory Category => throw new NotImplementedException();
 

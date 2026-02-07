@@ -32,7 +32,7 @@ public class MutationSettings : IMutationSettings
     public bool SkipTestingNoActiveMutants { get; set; } = false;
 
     /// <inheritdoc/>
-    public List<SpecifcMutation> DisabledMutationTypes { get; set; } = [];
+    public List<SpecificMutation> DisabledMutationTypes { get; set; } = [];
 
     /// <inheritdoc/>
     public void UpdateProfile(SolutionProfileData? solutionProfileData)
