@@ -27,6 +27,7 @@ public class SolutionExplorerViewModelTests
 
         _eventAggregator.GetEvent<DarwingOperationStatesChangedEvent>().Returns(Substitute.For<DarwingOperationStatesChangedEvent>());
         _eventAggregator.GetEvent<MutationUpdated>().Returns(Substitute.For<MutationUpdated>());
+        _eventAggregator.GetEvent<SettingChanged>().Returns(Substitute.For<SettingChanged>());
 
         _fileExplorerViewModel = new FileExplorerViewModel(_solutionProvider, _eventAggregator, _mutationDiscoveryManager);
         

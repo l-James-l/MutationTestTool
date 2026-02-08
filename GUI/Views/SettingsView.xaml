@@ -6,9 +6,137 @@
              xmlns:local="clr-namespace:GUI.Views"
              mc:Ignorable="d" 
              xmlns:vm="clr-namespace:GUI.ViewModels"
-             d:DataContext="{d:DesignInstance Type=vm:SettingsViewModel}"
-             d:DesignHeight="450" d:DesignWidth="800">
-    <Grid>
-        <TextBlock>Settiings View</TextBlock>
-    </Grid>
+             xmlns:evm="clr-namespace:GUI.ViewModels.SettingsElements"
+             xmlns:views="clr-namespace:GUI.Views.SettingsElements"
+             d:DataContext="{d:DesignInstance Type=vm:SettingsViewModel}">
+
+    <UserControl.Resources>
+        <Style TargetType="Border" x:Key="CatagoryContainer">
+            <Setter Property="Background" Value="#1f2939"/>
+            <Setter Property="BorderBrush" Value="LightGray"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Margin" Value="10"/>
+            <Setter Property="Height" Value="Auto"/>
+        </Style>
+
+        <Style TargetType="Button">
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Cursor" Value="Hand"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <DataTemplate DataType="{x:Type evm:ProjectTypeCollectionSettings}">
+            <views:ProjectTypeSettingsView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type evm:GeneralSettingsViewModel}">
+            <views:GeneralSettingsView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type evm:DisabledMutationTypesViewModel}">
+            <views:DisabledMutationTypesView/>
+        </DataTemplate>
+    </UserControl.Resources>
+    
+    <ScrollViewer>
+        <Grid ScrollViewer.CanContentScroll="True"
+              ScrollViewer.VerticalScrollBarVisibility="Auto"
+              ScrollViewer.PanningMode="VerticalFirst">
+            
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/> <!--Header-->
+                <RowDefinition Height="*"/> <!--Content-->
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0" Margin="25,0,25,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0">
+                    <TextBlock FontWeight="SemiBold" FontSize="26" Text="Settings" Foreground="White"/>
+                    <TextBlock FontWeight="Light" FontSize="12" Text="Configure Testing Behaviour" Foreground="LightGray"/>
+                </StackPanel>
+
+                <Button Grid.Column="1" HorizontalAlignment="Right" Command="{Binding SaveSettingsCommand}">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="#1E293B" 
+                                    BorderBrush="#475569" 
+                                    BorderThickness="1" 
+                                    CornerRadius="4" 
+                                    Padding="10,0"
+                                    HorizontalAlignment="Right">
+                                <StackPanel Orientation="Horizontal" >
+                                    <TextBlock Text="&#xE74E;" 
+                                               Style="{StaticResource FluentIcon}" 
+                                               Margin="0,0,6,0"
+                                               VerticalAlignment="Center"/>
+                                    <TextBlock Text="Save Settings In Solution" Foreground="White" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </Grid>
+
+            <StackPanel Grid.Row="1" Orientation="Vertical">
+
+                <Border Style="{StaticResource CatagoryContainer}" Margin="25,0,25,25" Padding="10">
+                    <StackPanel Height="Auto">
+                        <TextBlock FontWeight="SemiBold" FontSize="15" Text="Project Types" Foreground="White"/>
+
+                        <ContentControl Content="{Binding ProjectTypeSettings}" Margin="0,10,0,0" Height="Auto">
+                            <ContentControl.Style>
+                                <Style TargetType="ContentControl">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding ProjectTypeSettings.Projects.Count}" Value="0">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ContentControl.Style>
+                        </ContentControl>
+
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Height="Auto">
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding ProjectTypeSettings.Projects.Count}" Value="0">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
+
+                            <TextBlock Text="Once a solution has been loaded, you will be able to configure the project types here."
+                                       TextWrapping="Wrap" 
+                                       FontSize="16" 
+                                       Opacity="0.5" 
+                                       Foreground="White"
+                                       TextAlignment="Center"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource CatagoryContainer}" Margin="25,0,25,25" Padding="10">
+                    <StackPanel Height="Auto">
+                        <TextBlock FontWeight="SemiBold" FontSize="15" Text="General Settings" Foreground="White"/>
+                        <ContentControl Content="{Binding GeneralSettingsViewModel}"/>
+                    </StackPanel>
+                </Border>
+            
+                <Border Style="{StaticResource CatagoryContainer}" Margin="25,0,25,25" Padding="10">
+                    <StackPanel Height="Auto">
+                        <TextBlock FontWeight="SemiBold" FontSize="15" Text="Mutation Types" Foreground="White"/>
+                        <ContentControl Content="{Binding DisabledMutationTypesViewModel}"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Grid>
+    </ScrollViewer>
 </UserControl>

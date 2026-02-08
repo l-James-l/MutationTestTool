@@ -1,22 +1,28 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Models;
 using Models.Enums;
 using Mutator;
 using Mutator.MutationImplementations;
+using NSubstitute;
 
 namespace MutatorTests;
 
 public class MutationImplementationProviderTests
 {
     private MutationImplementationProvider _mutationImplementationProvider;
+    private IMutationSettings _mutationSettings;
 
     [SetUp]
     public void SetUp()
     {
         IEnumerable<IMutationImplementation> mutators = [new TestMutator1(), new TestMutator2()];
+        
+        _mutationSettings = Substitute.For<IMutationSettings>();
+        _mutationSettings.DisabledMutationTypes.Returns([]);
 
-        _mutationImplementationProvider = new MutationImplementationProvider(mutators);
+        _mutationImplementationProvider = new MutationImplementationProvider(mutators, _mutationSettings);
     }
 
     [Test]
@@ -56,7 +62,7 @@ public class MutationImplementationProviderTests
 
 file class TestMutator1 : IMutationImplementation
 {
-    public SpecifcMutation Mutation => throw new NotImplementedException();
+    public SpecificMutation Mutation => (SpecificMutation)0;
 
     public MutationCategory Category => throw new NotImplementedException();
 
@@ -72,7 +78,7 @@ file class TestMutator1 : IMutationImplementation
 
 file class TestMutator2 : IMutationImplementation
 {
-    public SpecifcMutation Mutation => throw new NotImplementedException();
+    public SpecificMutation Mutation => (SpecificMutation)1;
 
     public MutationCategory Category => throw new NotImplementedException();
 

@@ -22,8 +22,6 @@ public class SolutionProfileDeserializer : ISolutionProfileDeserializer
     {
         ArgumentNullException.ThrowIfNull(slnFilePath);
 
-        _mutationSettings.SolutionProfileData = null;
-
         string? directory = Path.GetDirectoryName(slnFilePath);
         if (directory == null)
         {
@@ -56,9 +54,14 @@ public class SolutionProfileDeserializer : ISolutionProfileDeserializer
 
     private void AssignSettingsFromProfile(SolutionProfileData profileData)
     {
-        _mutationSettings.SolutionProfileData = profileData;
+        _mutationSettings.TestProjects = profileData.TestProjects;
+        _mutationSettings.IgnoreProjects = profileData.IgnoreProjects;
+        _mutationSettings.SourceCodeProjects = profileData.SourceCodeProjects;
+        _mutationSettings.DisabledMutationTypes = profileData.DisabledMutationTypes;
 
-        //TODO: as more settings are introduced and used, will need to update them here.
-        _mutationSettings.TestProjectNames = profileData.TestProjects;
+        _mutationSettings.SingleMutantPerLine = profileData.SingleMutantPerLine;
+        _mutationSettings.BuildTimeout = profileData.BuildTimeout;
+        _mutationSettings.TestRunTimeout = profileData.TestRunTimeout;
+        _mutationSettings.SkipTestingNoActiveMutants = profileData.SkipTestingNoActiveMutants;
     }
 }

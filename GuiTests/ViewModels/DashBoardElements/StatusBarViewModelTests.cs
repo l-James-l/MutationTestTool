@@ -1,4 +1,5 @@
-﻿using GUI.ViewModels.DashBoardElements;
+﻿using GUI.Services;
+using GUI.ViewModels.DashBoardElements;
 using Models.Enums;
 using Models.Events;
 using Models.SharedInterfaces;
@@ -10,6 +11,7 @@ public class StatusBarViewModelTests
 {
     private IStatusTracker _statusTracker;
     private IEventAggregator _eventAggregator;
+    private IDarwingDialogService _dialogService;
     private DarwingOperationStatesChangedEvent _statesChangedEvent;
 
     private Action<DarwingOperation> _handler = default!; //Assign default to make compiler happy 
@@ -21,6 +23,7 @@ public class StatusBarViewModelTests
     {
         _statusTracker = Substitute.For<IStatusTracker>();
         _eventAggregator = Substitute.For<IEventAggregator>();
+        _dialogService = Substitute.For<IDarwingDialogService>();
         _statesChangedEvent = Substitute.For<DarwingOperationStatesChangedEvent>();
 
         _eventAggregator.GetEvent<DarwingOperationStatesChangedEvent>().Returns(_statesChangedEvent);
@@ -29,7 +32,7 @@ public class StatusBarViewModelTests
             .When(x => x.Subscribe(Arg.Any<Action<DarwingOperation>>(), Arg.Any<ThreadOption>()))
             .Do(ci => _handler = ci.Arg<Action<DarwingOperation>>());
 
-        _vm = new StatusBarViewModel(_statusTracker, _eventAggregator);
+        _vm = new StatusBarViewModel(_statusTracker, _eventAggregator, _dialogService);
     }
 
     [Test]

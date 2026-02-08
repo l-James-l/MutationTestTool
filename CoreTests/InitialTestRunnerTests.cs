@@ -62,7 +62,7 @@ public class InitialTestRunnerTests
         _mutationSettings.SolutionPath.Returns("this/is/the/path/to/solution.sln");
         IProcessWrapper testProcess = Substitute.For<IProcessWrapper>();
         _processWrapperFactory.Create(Arg.Is<ProcessStartInfo>(x => x.Arguments == "test solution.sln --no-build")).Returns(testProcess);
-        testProcess.StartAndAwait(null).Returns(true);
+        testProcess.StartAndAwait(_mutationSettings.TestRunTimeout).Returns(true);
         testProcess.Success.Returns(true);
         testProcess.Output.Returns([]);
         testProcess.Errors.Returns([]);
@@ -79,7 +79,7 @@ public class InitialTestRunnerTests
             x.WorkingDirectory == "this\\is\\the\\path\\to" &&
             x.RedirectStandardError && x.RedirectStandardOutput));
 
-        testProcess.Received(1).StartAndAwait(null);
+        testProcess.Received(1).StartAndAwait(_mutationSettings.TestRunTimeout);
         _mutationDiscoveryManager.Received(1).PerformMutationDiscovery();
         _initiateTestRunCompleteEvent.Received(1).Publish(Arg.Is<InitialTestRunInfo>(x => x.WasSuccesful && x.InitialRunDuration.Seconds == 30));
         _statusTracker.Received(1).FinishOperation(DarwingOperation.TestUnmutatedSolution, true);
@@ -93,7 +93,7 @@ public class InitialTestRunnerTests
         _mutationSettings.SolutionPath.Returns("this/is/the/path/to/solution.sln");
         IProcessWrapper testProcess = Substitute.For<IProcessWrapper>();
         _processWrapperFactory.Create(Arg.Is<ProcessStartInfo>(x => x.Arguments == "test solution.sln --no-build")).Returns(testProcess);
-        testProcess.StartAndAwait(null).Returns(true);
+        testProcess.StartAndAwait(Arg.Any<double>()).Returns(true);
         testProcess.Success.Returns(false);
         testProcess.Output.Returns([]);
         testProcess.Errors.Returns([]);
@@ -107,7 +107,7 @@ public class InitialTestRunnerTests
             x.Arguments == "test solution.sln --no-build" &&
             x.WorkingDirectory == "this\\is\\the\\path\\to" &&
             x.RedirectStandardError && x.RedirectStandardOutput && !x.UseShellExecute));
-        testProcess.Received(1).StartAndAwait(null);
+        testProcess.Received(1).StartAndAwait(_mutationSettings.TestRunTimeout);
         _initiateTestRunCompleteEvent.Received(1).Publish(Arg.Is<InitialTestRunInfo>(x => !x.WasSuccesful));
         _mutationDiscoveryManager.DidNotReceiveWithAnyArgs().PerformMutationDiscovery();
         _statusTracker.Received(1).FinishOperation(DarwingOperation.TestUnmutatedSolution, false);

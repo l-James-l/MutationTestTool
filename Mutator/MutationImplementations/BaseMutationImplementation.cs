@@ -12,7 +12,7 @@ public abstract class BaseMutationImplementation : IMutationImplementation
     public static string ActiveMutationIndex = "DarwingActiveMutationIndex";
     public static SyntaxAnnotation DontMutateAnnotation = new ("DarwingDoNotMutate");
 
-    public abstract SpecifcMutation Mutation { get; }
+    public abstract SpecificMutation Mutation { get; }
 
     public abstract MutationCategory Category { get; }
     
