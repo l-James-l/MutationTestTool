@@ -48,9 +48,37 @@ public class MutationStateStringConverterTests
     }
 
     [Test]
+    public void GivenNoCoverageStatus_WhenConvertIsCalled_ThenSurvivedNoCoverageIsReturned()
+    {
+        // Arrange
+        var converter = new MutationStateStringConverter();
+        var status = MutantStatus.NoCoverage;
+
+        // Act
+        var result = converter.Convert(status, null, null, null);
+        
+        // Assert
+        Assert.That(result, Is.EqualTo("Survived, No Coverage"));
+    }
+
+    [Test]
+    public void GivenIgnoredStatus_WhenConvertIsCalled_ThenIgnoredIsReturned()
+    {
+        // Arrange
+        var converter = new MutationStateStringConverter();
+        var status = MutantStatus.Survived;
+
+        // Act
+        var result = converter.Convert(status, null, null, null);
+        
+        // Assert
+        Assert.That(result, Is.EqualTo("Not Tested, Multiple Mutants on Line"));
+    }
+
+    [Test]
     public void GivenOtherStatuses_WhenConvertIsCalled_ThenAwaitingTestIsReturned()
     {
-        foreach (var status in Enum.GetValues<MutantStatus>().Except([MutantStatus.Killed, MutantStatus.Survived]))
+        foreach (var status in Enum.GetValues<MutantStatus>().Except([MutantStatus.Killed, MutantStatus.Survived, MutantStatus.NoCoverage, MutantStatus.IgnoredMultipleOnLine]))
         {
             // Arrange
             var converter = new MutationStateStringConverter();

@@ -19,6 +19,8 @@ public class MutationStatusColourConverterTests
         Assert.That(converter.Convert(MutantStatus.TestOngoing, null, null, null), Is.EqualTo(Brushes.Blue));
         Assert.That(converter.Convert(MutantStatus.Survived, null, null, null), Is.EqualTo(Brushes.Red));
         Assert.That(converter.Convert(MutantStatus.Killed, null, null, null), Is.EqualTo(Brushes.Green));
+        Assert.That(converter.Convert(MutantStatus.NoCoverage, null, null, null), Is.EqualTo(Brushes.Red));
+        Assert.That(converter.Convert(MutantStatus.IgnoredMultipleOnLine, null, null, null), Is.EqualTo(Brushes.Gray));
     }
 
     [Test]

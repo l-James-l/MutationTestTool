@@ -78,9 +78,9 @@ public class MutationScoreByProjectViewModel
         if (Projects.FirstOrDefault(x => x.ID == mutation.Document.ProjectId) is IndividualProjectSummaryViewModel proj)
         {
             IEnumerable<DiscoveredMutation> projMutations = _mutationDiscoveryManager.DiscoveredMutations.Where(x => x.Document.ProjectId == proj.ID);
-            proj.TotalMutations = projMutations.Count(x => x.Status is not MutantStatus.CausedBuildError);
-            proj.KilledMutations = projMutations.Count(x => x.Status is MutantStatus.Killed);
-            proj.SurvivedMutations = projMutations.Count(x => x.Status is MutantStatus.Survived);
+            proj.TotalMutations = projMutations.Count(x => x.Status.IncludeInTotalCount());
+            proj.KilledMutations = projMutations.Count(x => x.Status.IncludeInKilledCount());
+            proj.SurvivedMutations = projMutations.Count(x => x.Status.IncludeInSurvivedCount());
         }
     }
 }

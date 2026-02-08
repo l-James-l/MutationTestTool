@@ -17,6 +17,7 @@ public class MutationDiscoveryManager : IMutationDiscoveryManager
     private readonly IMutationImplementationProvider _mutationImplementationProvider;
     private readonly IStatusTracker _statusTracker;
     private readonly IEventAggregator _eventAggregator;
+    private readonly IMutationSettings _settings;
 
     /// <summary>
     /// All discovered mutations
@@ -26,7 +27,7 @@ public class MutationDiscoveryManager : IMutationDiscoveryManager
     private Solution? _mutatedSolution;
 
     public MutationDiscoveryManager(ISolutionProvider solutionProvider, IMutationImplementationProvider mutationImplementationProvider,
-        IStatusTracker statusTracker, IEventAggregator eventAggregator)
+        IStatusTracker statusTracker, IEventAggregator eventAggregator, IMutationSettings settings)
     {
         ArgumentNullException.ThrowIfNull(solutionProvider);
         ArgumentNullException.ThrowIfNull(mutationImplementationProvider);
@@ -37,6 +38,7 @@ public class MutationDiscoveryManager : IMutationDiscoveryManager
         _mutationImplementationProvider = mutationImplementationProvider;
         _statusTracker = statusTracker;
         _eventAggregator = eventAggregator;
+        _settings = settings;
     }
 
     /// <inheritdoc/>
@@ -90,20 +92,48 @@ public class MutationDiscoveryManager : IMutationDiscoveryManager
             {
                 Log.Information($"Discovering mutations for {tree.FilePath}.");
 
-                List<DiscoveredMutation> tempDiscoveredMutations = new List<DiscoveredMutation>();
-                SyntaxNode mutatedRoot = TraverseSyntaxNodeForMutation(tree.GetRoot(), tempDiscoveredMutations);
-                Log.Information($"Discovered {tempDiscoveredMutations.Count} mutations for {tree.FilePath}.");
+                List<DiscoveredMutation> discoveredMutationsInFile = new List<DiscoveredMutation>();
+                SyntaxNode mutatedRoot = TraverseSyntaxNodeForMutation(tree.GetRoot(), discoveredMutationsInFile);
+                Log.Information($"Discovered {discoveredMutationsInFile.Count} mutations for {tree.FilePath}.");
 
                 SyntaxTree mutatedTree = tree.WithRootAndOptions(mutatedRoot, tree.Options);
 
                 // By applying the document ID here, we remove the need for the recursion to be aware of the document its traversing.
-                tempDiscoveredMutations.ForEach(mutation => mutation.Document = documentId);
-                DiscoveredMutations.AddRange(tempDiscoveredMutations);
+                discoveredMutationsInFile.ForEach(mutation => mutation.Document = documentId);
+                DiscoveredMutations.AddRange(discoveredMutationsInFile);
                 RediscoverMutationsInTree(mutatedRoot);
+                if (discoveredMutationsInFile.Any(x => x.Status is MutantStatus.Discovered))
+                {
+                    Log.Error($"Unable to rediscover a mutation(s) in {tree.FilePath}. It will not be tested and cannot be removed if it causes build errors.");
+                }
+                if (_settings.SingleMutantPerLine)
+                {
+                    IgnoreMultipleMutationsOnSingleLine(discoveredMutationsInFile);
+                }
 
                 ApplyDiscoveredMutationsToDocument(documentId, mutatedRoot);
             }
         }
+    }
+
+    private void IgnoreMultipleMutationsOnSingleLine(List<DiscoveredMutation> discoveredMutationsInFile)
+    {
+        //Must be called AFTER rediscovering mutations in tree to ensure line spans are correct.
+        IEnumerable<IGrouping<int, DiscoveredMutation>> lineGroupings = discoveredMutationsInFile.GroupBy(mutation => mutation.LineSpan.StartLinePosition.Line);
+        List<IGrouping<int, DiscoveredMutation>> linesWithMultipleMutants = [.. lineGroupings.Where(group => group.Count() > 1)];
+        
+        linesWithMultipleMutants
+            .ForEach(group =>
+            {
+                //Keep the first mutation and ignore the rest.
+                //TODO: This is pretty naive,
+                //it would be better to have some sort of priority system to determine which mutation to keep rather than just keeping the first one we come across.
+                group.Skip(1).ToList().ForEach(mutation =>
+                {
+                    mutation.Status = MutantStatus.IgnoredMultipleOnLine;
+                    Log.Information($"Ignoring mutation {mutation.ID} on line {mutation.LineSpan.StartLinePosition.Line} of document {mutation.Document} because there is already another mutation on that line and the setting to only allow one mutant per line is enabled.");
+                });
+            });
     }
 
     /// <summary>

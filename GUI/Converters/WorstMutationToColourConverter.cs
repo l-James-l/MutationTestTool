@@ -18,11 +18,11 @@ class WorstMutationToColourConverter : IValueConverter
             return Brushes.Transparent;
         }
 
-        if (mutations.Any(x => x.Status is MutantStatus.Survived))
+        if (mutations.Any(x => x.Status.IncludeInSurvivedCount()))
         {
             return Brushes.Red;
         }
-        else if (mutations.Any(x => x.Status is not MutantStatus.Killed))
+        else if (mutations.Any(x => !x.Status.IncludeInKilledCount()))
         {
             return Brushes.Orange;
         }

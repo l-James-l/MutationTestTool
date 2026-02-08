@@ -79,7 +79,7 @@ public class SolutionExplorerViewModel : ViewModelBase, ISolutionExplorerViewMod
             {
                 SourceCode = line,
                 LineNumber = index + 1,
-                MutationsOnLine = [.. selectedFile.MutationInFile.Where(x => x.LineSpan.StartLinePosition.Line == index && x.Status is not MutantStatus.CausedBuildError)]
+                MutationsOnLine = [.. selectedFile.MutationInFile.Where(x => x.LineSpan.StartLinePosition.Line == index && x.Status.IncludeInReport())]
             })];
 
             FileDetails.AddRange(lineDetails);

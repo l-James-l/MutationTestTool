@@ -87,12 +87,12 @@ public class FileExplorerViewModel : ViewModelBase
             return;
         }
 
-        if (!matchingFileNode.MutationInFile.Contains(mutation))
+        if (mutation.Status.IncludeInReport() && !matchingFileNode.MutationInFile.Contains(mutation))
         {
             matchingFileNode.MutationInFile.Add(mutation);
         }
-        matchingFileNode.MutationCount = matchingFileNode.MutationInFile.Count(x => x.Status is not MutantStatus.CausedBuildError);
-        matchingFileNode.KilledMutationCount = matchingFileNode.MutationInFile.Count(x => x.Status is MutantStatus.Killed);
+        matchingFileNode.MutationCount = matchingFileNode.MutationInFile.Count(x => x.Status.IncludeInTotalCount());
+        matchingFileNode.KilledMutationCount = matchingFileNode.MutationInFile.Count(x => x.Status.IncludeInKilledCount());
         OnPropertyChanged(nameof(SolutionTree));
 
         if (SelectedFile is not null &&  matchingFileNode == SelectedFile)

@@ -24,6 +24,7 @@ public class GuiDependencyRegistrar : DependencyRegistrar
     {
         Services.AddSingleton<IFileSelectorService, FileSelectorService>();
         Services.AddSingleton<IDarwingDialogService, DialogService>();
+        Services.AddSingleton<IConsoleService, ConsoleService>();
     }
 
     private void RegisterViewModels()

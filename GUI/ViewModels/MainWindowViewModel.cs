@@ -12,6 +12,7 @@ public class MainWindowViewModel : ViewModelBase
     private readonly ISettingsViewModel _settingsViewModel;
     private readonly ISolutionBuilder _solutionBuilder;
     private readonly IMutationRunInitiator _mutationRunInitiator;
+    private readonly IConsoleService _consoleService;
     private readonly IFileSelectorService _fileSelectorService;
     private readonly ISolutionLoader _solutionLoader;
     private readonly IMutationSettings _mutationSettings;
@@ -22,7 +23,8 @@ public class MainWindowViewModel : ViewModelBase
     /// </summary>
     public MainWindowViewModel(IFileSelectorService fileSelectorService, ISolutionLoader solutionLoader,
         IMutationSettings mutationSettings, IDashBoardViewModel dashBoard, ISolutionExplorerViewModel slnExplorer,
-        ISettingsViewModel settings, ISolutionBuilder solutionBuilder, IMutationRunInitiator mutationRunInitiator)
+        ISettingsViewModel settings, ISolutionBuilder solutionBuilder, IMutationRunInitiator mutationRunInitiator, 
+        IConsoleService consoleService)
     {
         ArgumentNullException.ThrowIfNull(fileSelectorService);
         ArgumentNullException.ThrowIfNull(solutionLoader);
@@ -45,11 +47,13 @@ public class MainWindowViewModel : ViewModelBase
         _mutationSettings = mutationSettings;
         _solutionBuilder = solutionBuilder;
         _mutationRunInitiator = mutationRunInitiator;
+        _consoleService = consoleService;
 
         SolutionPathSelection = new DelegateCommand(SelectSolutionPath);
         ReloadCurrentSolution = new DelegateCommand(ReloadCurrentSolutionCommand);
         RebuildCurrentSolution = new DelegateCommand(RebuildCurrentSolutionCommand);
         TestSolution = new DelegateCommand(TestSolutionCommand);
+        ToggleConsole = new DelegateCommand(ToggleConsoleCommand);
     }
 
     /// <summary>
@@ -117,5 +121,11 @@ public class MainWindowViewModel : ViewModelBase
     private async void TestSolutionCommand()
     {
         await Task.Run(_mutationRunInitiator.Run);
+    }
+
+    public DelegateCommand ToggleConsole { get; }
+    private void ToggleConsoleCommand()
+    {
+        _consoleService.ToggleConsoleVisable();
     }
 }

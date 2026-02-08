@@ -18,8 +18,10 @@ class MutationStatusColourConverter : IValueConverter
         {
             MutantStatus.Killed => Brushes.Green,
             MutantStatus.Survived => Brushes.Red,
+            MutantStatus.NoCoverage => Brushes.Red,
             MutantStatus.Available => Brushes.Orange,
             MutantStatus.TestOngoing => Brushes.Blue,
+            MutantStatus.IgnoredMultipleOnLine => Brushes.Gray,
             _ => Brushes.Red,
         };
     }

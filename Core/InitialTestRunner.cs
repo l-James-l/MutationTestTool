@@ -1,4 +1,4 @@
-﻿using Core.IndustrialEstate;
+using Core.IndustrialEstate;
 using Core.Interfaces;
 using Models;
 using Models.Enums;
@@ -84,7 +84,6 @@ public class InitialTestRunner : IMutationRunInitiator
         if (!processSuccess || !testRun.Success)
         {
             Log.Error("Initial test run without mutations has failures. Cannot perform mutation testing.");
-            testRun.Errors.ForEach(Log.Error);
         }
         else
         {
