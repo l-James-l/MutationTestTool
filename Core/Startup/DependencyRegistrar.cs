@@ -73,8 +73,21 @@ public abstract class DependencyRegistrar : IDisposable
         Services.RegisterManySingleton<MutatedSolutionTester>();
 
         //Specific implementations:
+        //Arithmetic:
         Services.AddSingleton<IMutationImplementation, SubtractToAddMutator>();
         Services.AddSingleton<IMutationImplementation, AddToSubtractMutator>();
+        Services.AddSingleton<IMutationImplementation, IncrementToDecrementMutator>();
+        Services.AddSingleton<IMutationImplementation, DecrementToIncrementMutator>();
+
+        //Equality
+        Services.AddSingleton<IMutationImplementation, EqualToNotEqualMutator>();
+        Services.AddSingleton<IMutationImplementation, NotEqualToEqualMutator>();
+
+        //conditional
+        Services.AddSingleton<IMutationImplementation, GreaterThanOrEqualToLessThan>();
+        Services.AddSingleton<IMutationImplementation, GreaterThanToLessThanOrEqualTo>();
+        Services.AddSingleton<IMutationImplementation, LessThanOrEqualToGreaterThan>();
+        Services.AddSingleton<IMutationImplementation, LessThanToGreaterThanOrEqualTo>();
     }
 
     private void StartUpProcesses()

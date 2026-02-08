@@ -21,6 +21,13 @@ public abstract class BaseMutationImplementation : IMutationImplementation
     public abstract Type RequiredNodeType { get; }
 
     /// <summary>
+    /// For some mutation types, replacing the node with the standard mutation switcher introduces build errors.
+    /// If true, this will add an anonymous discard method around it
+    /// _ = (SyntaxSwitcher)
+    /// </summary>
+    protected virtual bool WrapInDiscardedMethod { get; set; } = false;
+
+    /// <summary>
     /// Will return a mutated syntax node with a mutation switcher applied to it.
     /// </summary>
     public (SyntaxNode mutationSwitcher, SyntaxAnnotation identififer, SyntaxNode mutatedNode) Mutate(SyntaxNode node)
@@ -90,9 +97,14 @@ public abstract class BaseMutationImplementation : IMutationImplementation
         originalNode = originalNode.WithAdditionalAnnotations(DontMutateAnnotation); // original node only needs the top level dont mutate annotation.
 
         // should be equivalent to: (Environment.GetEnvironmentVariable("DarwingActiveMutationIndex") == id ? mutatedNode : originalNode)
-        ConditionalExpressionSyntax mutationSwitcher = SyntaxFactory.ConditionalExpression(condition, mutatedNode, originalNode).WithAdditionalAnnotations(DontMutateAnnotation);
-        ParenthesizedExpressionSyntax parenthesizedSwitcher = SyntaxFactory.ParenthesizedExpression(mutationSwitcher).WithAdditionalAnnotations(DontMutateAnnotation);
+        ExpressionSyntax mutationSwitcher = SyntaxFactory.ConditionalExpression(condition, mutatedNode, originalNode).WithAdditionalAnnotations(DontMutateAnnotation);
+        ExpressionSyntax parenthesizedSwitcher = SyntaxFactory.ParenthesizedExpression(mutationSwitcher).WithAdditionalAnnotations(DontMutateAnnotation);
         
+        if (WrapInDiscardedMethod)
+        {
+            parenthesizedSwitcher = WrapInDiscardMethod(parenthesizedSwitcher).WithAdditionalAnnotations(DontMutateAnnotation);
+        }
+
         return parenthesizedSwitcher.NormalizeWhitespace();
     }
 
@@ -121,5 +133,17 @@ public abstract class BaseMutationImplementation : IMutationImplementation
         });
 
         return node;
+    }
+
+    private ExpressionSyntax WrapInDiscardMethod(ExpressionSyntax mutationSwitcher)
+    {
+        //Wrap the mutation switcher in an anonymous discard method to avoid build errors for certain mutation types.
+        AssignmentExpressionSyntax discardAssignment =
+            SyntaxFactory.AssignmentExpression(
+                SyntaxKind.SimpleAssignmentExpression, 
+                SyntaxFactory.IdentifierName("_"), 
+                mutationSwitcher);
+
+        return discardAssignment;
     }
 }

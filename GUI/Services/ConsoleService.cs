@@ -30,6 +30,17 @@ public class ConsoleService : IConsoleService
     private bool _isInitialized;
     private bool _isVisible;
 
+    public ConsoleService()
+    {
+        if (!_isInitialized)
+        {
+            AllocConsole();
+            _isInitialized = true;
+            _isVisible = false; // Console starts as visible
+            SetVisable(_isVisible);
+        }
+    }
+
     public void ToggleConsoleVisable()
     {
         // Ensure the console is allocated once for the lifetime of the app
@@ -40,10 +51,15 @@ public class ConsoleService : IConsoleService
         }
 
         _isVisible = !_isVisible; // Toggle visibility
+        SetVisable(_isVisible);
+    }
+
+    private void SetVisable(bool visible)
+    {
         IntPtr handle = GetConsoleWindow();
         if (handle != IntPtr.Zero)
         {
-            ShowWindow(handle, _isVisible ? SW_SHOW : SW_HIDE);
+            ShowWindow(handle, visible ? SW_SHOW : SW_HIDE);
 
             // Disable the close button on the console window. 
             // Closing the console will cause the entire application to exit, so force the user to toggle the console via the GUI.
