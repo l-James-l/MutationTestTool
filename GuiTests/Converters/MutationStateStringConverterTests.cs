@@ -66,7 +66,7 @@ public class MutationStateStringConverterTests
     {
         // Arrange
         var converter = new MutationStateStringConverter();
-        var status = MutantStatus.Survived;
+        var status = MutantStatus.IgnoredMultipleOnLine;
 
         // Act
         var result = converter.Convert(status, null, null, null);
