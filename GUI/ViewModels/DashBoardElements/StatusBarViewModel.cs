@@ -1,18 +1,19 @@
-﻿using Models.Enums;
+﻿using GUI.Services;
+using Models.Enums;
 using Models.Events;
 using Models.SharedInterfaces;
-using System.Windows;
 
 namespace GUI.ViewModels.DashBoardElements;
 
 public class StatusBarViewModel : ViewModelBase
 {
     private readonly IStatusTracker _statusTracker;
+    private readonly IDarwingDialogService _dialogService;
 
-    public StatusBarViewModel(IStatusTracker statusTracker, IEventAggregator eventAggregator)
+    public StatusBarViewModel(IStatusTracker statusTracker, IEventAggregator eventAggregator, IDarwingDialogService dialogService)
     {
         _statusTracker = statusTracker;
-
+        _dialogService = dialogService;
         eventAggregator.GetEvent<DarwingOperationStatesChangedEvent>().Subscribe(_ => OnOperationStatesChanged(), ThreadOption.UIThread);
     }
 
@@ -28,7 +29,7 @@ public class StatusBarViewModel : ViewModelBase
 
         if (TestingMutantsState is OperationStates.Succeeded)
         {
-            MessageBox.Show($"Testing Completed!", "Testing Complete", MessageBoxButton.OK, MessageBoxImage.Information);
+            _dialogService.InfoDialog("Testing Completed!", "Testing Complete");
         }
     }
 
@@ -37,11 +38,8 @@ public class StatusBarViewModel : ViewModelBase
         OperationStates state = _statusTracker.CheckStatus(operation);
         if (state is OperationStates.Failed)
         {
-            MessageBox.Show(
-                $"While performing stage: {operation.ToReadableString()}, an error occurred and testing cannot continue. Check the console for details",
-                "Error occurred",
-                MessageBoxButton.OK,
-                MessageBoxImage.Error);
+            _dialogService.ErrorDialog("Error occurred",
+                $"While performing stage: {operation.ToReadableString()}, an error occurred and testing cannot continue. Check the console for details");
         }
         return state;
     }

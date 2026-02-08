@@ -23,6 +23,7 @@ public class GuiDependencyRegistrar : DependencyRegistrar
     private void RegisterServices()
     {
         Services.AddSingleton<IFileSelectorService, FileSelectorService>();
+        Services.AddSingleton<IDarwingDialogService, DialogService>();
     }
 
     private void RegisterViewModels()

@@ -1,8 +1,8 @@
-﻿using GUI.ViewModels.SettingsElements;
+﻿using GUI.Services;
+using GUI.ViewModels.SettingsElements;
 using Models;
 using Serilog;
 using System.IO;
-using System.Windows;
 using YamlDotNet.Serialization;
 
 namespace GUI.ViewModels;
@@ -15,12 +15,13 @@ public interface ISettingsViewModel
 public class SettingsViewModel : ViewModelBase, ISettingsViewModel
 {
     private readonly IMutationSettings _settings;
+    private readonly IDarwingDialogService _dialogService;
 
     public SettingsViewModel(ProjectTypeCollectionSettings projectTypeSettings, GeneralSettingsViewModel generalSettingsViewModel,
-        DisabledMutationTypesViewModel disabledMutationTypesViewModel, IMutationSettings settings)
+        DisabledMutationTypesViewModel disabledMutationTypesViewModel, IMutationSettings settings, IDarwingDialogService dialogService)
     {
         _settings = settings;
-        
+        _dialogService = dialogService;
         ProjectTypeSettings = projectTypeSettings;
         GeneralSettingsViewModel = generalSettingsViewModel;
         DisabledMutationTypesViewModel = disabledMutationTypesViewModel;
@@ -39,11 +40,8 @@ public class SettingsViewModel : ViewModelBase, ISettingsViewModel
         if (string.IsNullOrEmpty(_settings.SolutionPath))
         {
             Log.Error("No solution file path specified. Solution profile could not be saved.");
-            MessageBox.Show(
-                "No solution file path specified. Solution profile could not be saved.",
-                "Save Failed",
-                MessageBoxButton.OK,
-                MessageBoxImage.Error);
+            _dialogService.ErrorDialog("Save Failed",
+                "No solution file path specified. Solution profile could not be saved.");
             return;
         }
 
@@ -51,11 +49,8 @@ public class SettingsViewModel : ViewModelBase, ISettingsViewModel
         if (directory == null)
         {
             Log.Error("Failed to determine solution directory from solution file path. Solution profile could not be saved.");
-            MessageBox.Show(
-                "Failed to determine solution directory from solution file path. Solution profile could not be saved.",
-                "Save Failed",
-                MessageBoxButton.OK, 
-                MessageBoxImage.Error);
+            _dialogService.ErrorDialog("Save Failed",
+                 "Failed to determine solution directory from solution file path. Solution profile could not be saved.");
             return;
         }
 
@@ -66,7 +61,7 @@ public class SettingsViewModel : ViewModelBase, ISettingsViewModel
         string path = Path.Combine(directory, ".darwingSolutionProfile.yml");
         File.WriteAllText(path, ymlContent);
 
-        MessageBox.Show($"Profile saved to file location: '{path}'", "Save Confirmation", MessageBoxButton.OK, MessageBoxImage.Information);
+        _dialogService.InfoDialog("Save Confirmation", $"Profile saved to file location: '{path}'");
     }
 
     private SolutionProfileData BuildNewProfileObject()
