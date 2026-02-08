@@ -1,6 +1,7 @@
 ﻿using Models.Enums;
 using Models.Events;
 using Models.SharedInterfaces;
+using System.Windows;
 
 namespace GUI.ViewModels.DashBoardElements;
 
@@ -17,13 +18,32 @@ public class StatusBarViewModel : ViewModelBase
 
     private void OnOperationStatesChanged()
     {
-        LoadSolutionState = _statusTracker.CheckStatus(DarwingOperation.LoadSolution);
-        BuildOperationState = _statusTracker.CheckStatus(DarwingOperation.BuildSolution);
-        InitialTestRunState = _statusTracker.CheckStatus(DarwingOperation.TestUnmutatedSolution);
-        MutantDiscoveryState = _statusTracker.CheckStatus(DarwingOperation.DiscoveringMutants);
-        BuildingMutatedSolutionState = _statusTracker.CheckStatus(DarwingOperation.BuildingMutatedSolution);
-        TestingMutantsState = _statusTracker.CheckStatus(DarwingOperation.TestMutants);
+        LoadSolutionState = CheckStatus(DarwingOperation.LoadSolution);
+        BuildOperationState = CheckStatus(DarwingOperation.BuildSolution);
+        InitialTestRunState = CheckStatus(DarwingOperation.TestUnmutatedSolution);
+        MutantDiscoveryState = CheckStatus(DarwingOperation.DiscoveringMutants);
+        BuildingMutatedSolutionState = CheckStatus(DarwingOperation.BuildingMutatedSolution);
+        TestingMutantsState = CheckStatus(DarwingOperation.TestMutants);
         UpdateCompletionPercentage();
+
+        if (TestingMutantsState is OperationStates.Succeeded)
+        {
+            MessageBox.Show($"Testing Completed!", "Testing Complete", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+    }
+
+    private OperationStates CheckStatus(DarwingOperation operation)
+    {
+        OperationStates state = _statusTracker.CheckStatus(operation);
+        if (state is OperationStates.Failed)
+        {
+            MessageBox.Show(
+                $"While performing stage: {operation.ToReadableString()}, an error occurred and testing cannot continue. Check the console for details",
+                "Error occurred",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+        return state;
     }
 
     public float ProgressBarPercentage

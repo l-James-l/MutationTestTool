@@ -64,9 +64,9 @@ public class SolutionProfileDeserializer : ISolutionProfileDeserializer
         _mutationSettings.SourceCodeProjects = profileData.SourceCodeProjects;
         _mutationSettings.DisabledMutationTypes = profileData.DisabledMutationTypes;
 
-        _mutationSettings.SingleMutantPerLine = profileData.GeneralSettings.SingleMutantPerLine;
-        _mutationSettings.BuildTimeout = profileData.GeneralSettings.BuildTimeout;
-        _mutationSettings.TestRunTimeout = profileData.GeneralSettings.TestRunTimeout;
-        _mutationSettings.SkipTestingNoActiveMutants = profileData.GeneralSettings.SkipTestingNoActiveMutants;
+        _mutationSettings.SingleMutantPerLine = profileData.SingleMutantPerLine;
+        _mutationSettings.BuildTimeout = profileData.BuildTimeout;
+        _mutationSettings.TestRunTimeout = profileData.TestRunTimeout;
+        _mutationSettings.SkipTestingNoActiveMutants = profileData.SkipTestingNoActiveMutants;
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Models;
 using Models.Enums;
+using Models.Events;
 using Mutator.MutationImplementations;
 using System.Collections.ObjectModel;
 
@@ -18,7 +19,10 @@ namespace GUI.ViewModels.SettingsElements;
 /// </summary>
 public class DisabledMutationTypesViewModel : ViewModelBase
 {
-    public DisabledMutationTypesViewModel(IEnumerable<IMutationImplementation> implementedMutations, IMutationSettings settings)
+    private readonly IMutationSettings _settings;
+
+    public DisabledMutationTypesViewModel(IEnumerable<IMutationImplementation> implementedMutations, IMutationSettings settings, 
+        IEventAggregator eventAggregator)
     {
         IEnumerable<IGrouping<MutationCategory, IMutationImplementation>> categories = implementedMutations.GroupBy(m => m.Category);
         Dictionary<MutationCategory, IEnumerable<SpecificMutation>> dictionary = categories.ToDictionary(key => key.Key, value => value.Select(x => x.Mutation));
@@ -26,6 +30,20 @@ public class DisabledMutationTypesViewModel : ViewModelBase
         foreach ((MutationCategory category, IEnumerable<SpecificMutation> specificMutations) in dictionary)
         {
             MutationCategories.Add(new MutationTypeCategoryViewModel(category, specificMutations, settings));
+        }
+
+        eventAggregator.GetEvent<DarwingOperationStatesChangedEvent>().Subscribe(_ => RefreshStates(), ThreadOption.UIThread, true, x => x is DarwingOperation.LoadSolution);
+        _settings = settings;
+    }
+
+    private void RefreshStates()
+    {
+        foreach (MutationTypeCategoryViewModel category in MutationCategories)
+        {
+            foreach (SpecificMutationViewModel mutation in category.Mutations)
+            {
+                mutation.Enabled = !_settings.DisabledMutationTypes.Contains(mutation.Mutation);
+            }
         }
     }
 
@@ -47,7 +65,7 @@ public class MutationTypeCategoryViewModel : ViewModelBase
 
         foreach (SpecificMutation mutation in mutations)
         {
-            Mutations.Add(new SpecificMutationViewModel(mutation, settings, !settings.DisabledMutationTypes.Contains(mutation)));
+            Mutations.Add(new SpecificMutationViewModel(mutation, settings));
         }
 
         EnableAllCommand = new DelegateCommand(EnableAll);
@@ -102,16 +120,16 @@ public class MutationTypeCategoryViewModel : ViewModelBase
 /// </summary>
 public class SpecificMutationViewModel : ViewModelBase
 {
-    private readonly SpecificMutation _mutation;
+    public SpecificMutation Mutation { get; }
     private readonly IMutationSettings _settings;
 
-    public SpecificMutationViewModel(SpecificMutation mutation, IMutationSettings settings, bool initialValue)
+    public SpecificMutationViewModel(SpecificMutation mutation, IMutationSettings settings)
     {
-        _mutation = mutation;
         _settings = settings;
+        Mutation = mutation;
         Name = mutation.ToReadableString();
         Description = mutation.GetDescription();
-        Enabled = initialValue;
+        Enabled = !settings.DisabledMutationTypes.Contains(mutation);
     }
 
     /// <summary>
@@ -135,13 +153,13 @@ public class SpecificMutationViewModel : ViewModelBase
         set
         {
             SetProperty(ref field, value);
-            if (value && _settings.DisabledMutationTypes.Contains(_mutation))
+            if (value && _settings.DisabledMutationTypes.Contains(Mutation))
             {
-                _settings.DisabledMutationTypes.Remove(_mutation);
+                _settings.DisabledMutationTypes.Remove(Mutation);
             }
-            else if (!value && !_settings.DisabledMutationTypes.Contains(_mutation))
+            else if (!value && !_settings.DisabledMutationTypes.Contains(Mutation))
             {
-                _settings.DisabledMutationTypes.Add(_mutation);
+                _settings.DisabledMutationTypes.Add(Mutation);
             }
         }
     }

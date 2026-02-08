@@ -32,14 +32,6 @@ public class SolutionProfileData
     public List<SpecificMutation> DisabledMutationTypes { get; set; } = [];
 
     /// <summary>
-    /// Class containing more general settings.
-    /// </summary>
-    public SolutionProfileGeneralSettings GeneralSettings { get; set; } = new SolutionProfileGeneralSettings();
-}
-
-public class SolutionProfileGeneralSettings
-{
-    /// <summary>
     /// TODO: make this do something.
     /// </summary>
     [DefaultValue(true)]

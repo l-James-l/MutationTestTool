@@ -18,7 +18,14 @@
             <Setter Property="CornerRadius" Value="4"/>
             <Setter Property="Margin" Value="10"/>
             <Setter Property="Height" Value="Auto"/>
-            
+        </Style>
+
+        <Style TargetType="Button">
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Cursor" Value="Hand"/>
+                </Trigger>
+            </Style.Triggers>
         </Style>
 
         <DataTemplate DataType="{x:Type evm:ProjectTypeCollectionSettings}">
@@ -34,7 +41,7 @@
     
     <ScrollViewer>
         <Grid ScrollViewer.CanContentScroll="True"
-              ScrollViewer.VerticalScrollBarVisibility="Visible"
+              ScrollViewer.VerticalScrollBarVisibility="Auto"
               ScrollViewer.PanningMode="VerticalFirst">
             
             <Grid.RowDefinitions>
@@ -42,10 +49,38 @@
                 <RowDefinition Height="*"/> <!--Content-->
             </Grid.RowDefinitions>
 
-            <StackPanel Grid.Row="0" Margin="25,0,25,10">
-                <TextBlock FontWeight="SemiBold" FontSize="26" Text="Settings" Foreground="White"/>
-                <TextBlock FontWeight="Light" FontSize="12" Text="Configure Testing Behaviour" Foreground="LightGray"/>
-            </StackPanel>
+            <Grid Grid.Row="0" Margin="25,0,25,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0">
+                    <TextBlock FontWeight="SemiBold" FontSize="26" Text="Settings" Foreground="White"/>
+                    <TextBlock FontWeight="Light" FontSize="12" Text="Configure Testing Behaviour" Foreground="LightGray"/>
+                </StackPanel>
+
+                <Button Grid.Column="1" HorizontalAlignment="Right" Command="{Binding SaveSettingsCommand}">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="#1E293B" 
+                                    BorderBrush="#475569" 
+                                    BorderThickness="1" 
+                                    CornerRadius="4" 
+                                    Padding="10,0"
+                                    HorizontalAlignment="Right">
+                                <StackPanel Orientation="Horizontal" >
+                                    <TextBlock Text="&#xE74E;" 
+                                               Style="{StaticResource FluentIcon}" 
+                                               Margin="0,0,6,0"
+                                               VerticalAlignment="Center"/>
+                                    <TextBlock Text="Save Settings In Solution" Foreground="White" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </Grid>
 
             <StackPanel Grid.Row="1" Orientation="Vertical">
 
