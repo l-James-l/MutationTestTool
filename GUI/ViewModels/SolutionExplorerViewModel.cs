@@ -9,12 +9,7 @@ using System.IO;
 
 namespace GUI.ViewModels;
 
-public interface ISolutionExplorerViewModel
-{
-
-}
-
-public class SolutionExplorerViewModel : ViewModelBase, ISolutionExplorerViewModel
+public class SolutionExplorerViewModel : ViewModelBase
 {
     private const string _defaultFileDisplayHeader = "No File Selected";
     private readonly IEventAggregator _eventAggregator;
