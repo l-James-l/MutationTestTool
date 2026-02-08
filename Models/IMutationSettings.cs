@@ -52,12 +52,4 @@ public interface IMutationSettings
     /// List of any disabled mutation types.
     /// </summary>
     public List<SpecificMutation> DisabledMutationTypes { get; set; }
-
-
-    /// <summary>
-    /// Sets the profile which was loaded.
-    /// Once loaded and settings assigned, the profile will then only be used/changed if the user want to save the profile with the current settings,
-    /// which will then update the profile with the current settings and save it to a file.
-    /// </summary>
-    public void UpdateProfile(SolutionProfileData? solutionProfileData);
 }

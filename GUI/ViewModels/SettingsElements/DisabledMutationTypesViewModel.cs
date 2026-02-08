@@ -24,6 +24,8 @@ public class DisabledMutationTypesViewModel : ViewModelBase
     public DisabledMutationTypesViewModel(IEnumerable<IMutationImplementation> implementedMutations, IMutationSettings settings, 
         IEventAggregator eventAggregator)
     {
+        // Grab implemented mutations, rather than just using the enum values, to ensure that we only display mutation types that are actually supported by the current set of mutators.
+        // This also allows us to display the category
         IEnumerable<IGrouping<MutationCategory, IMutationImplementation>> categories = implementedMutations.GroupBy(m => m.Category);
         Dictionary<MutationCategory, IEnumerable<SpecificMutation>> dictionary = categories.ToDictionary(key => key.Key, value => value.Select(x => x.Mutation));
 

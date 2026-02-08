@@ -14,7 +14,7 @@ public class ProjectTypeCollectionSettingsTests
     private SettingChanged _settingChangedEvent;
 
     // We need to capture the refresh action
-    private Action<DarwingOperation> _onRefreshAction;
+    private Action<DarwingOperation> _onRefreshAction = default!;
     private ProjectTypeCollectionSettings _sut;
 
     [SetUp]

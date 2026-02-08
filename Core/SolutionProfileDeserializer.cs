@@ -22,8 +22,6 @@ public class SolutionProfileDeserializer : ISolutionProfileDeserializer
     {
         ArgumentNullException.ThrowIfNull(slnFilePath);
 
-        _mutationSettings.UpdateProfile(null);
-
         string? directory = Path.GetDirectoryName(slnFilePath);
         if (directory == null)
         {
@@ -56,9 +54,6 @@ public class SolutionProfileDeserializer : ISolutionProfileDeserializer
 
     private void AssignSettingsFromProfile(SolutionProfileData profileData)
     {
-        //  Assign the loaded profile data to the mutation settings, so that it can be used by other components in the system.
-        _mutationSettings.UpdateProfile(profileData);
-
         _mutationSettings.TestProjects = profileData.TestProjects;
         _mutationSettings.IgnoreProjects = profileData.IgnoreProjects;
         _mutationSettings.SourceCodeProjects = profileData.SourceCodeProjects;

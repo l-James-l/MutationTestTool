@@ -5,9 +5,6 @@ namespace Models;
 public class MutationSettings : IMutationSettings
 {
     /// <inheritdoc/>
-    private SolutionProfileData? _solutionProfileData;
-
-    /// <inheritdoc/>
     public string SolutionPath { get; set; } = "";
 
     /// <inheritdoc/>
@@ -33,11 +30,5 @@ public class MutationSettings : IMutationSettings
 
     /// <inheritdoc/>
     public List<SpecificMutation> DisabledMutationTypes { get; set; } = [];
-
-    /// <inheritdoc/>
-    public void UpdateProfile(SolutionProfileData? solutionProfileData)
-    {
-        _solutionProfileData = solutionProfileData;
-    }
 }
 

@@ -11,7 +11,7 @@ public class GeneralSettingsViewModelTests
     private IMutationSettings _settings;
     private IEventAggregator _eventAggregator;
 
-    private Action<DarwingOperation> _onRefreshAction;
+    private Action<DarwingOperation> _onRefreshAction = default!;
     private GeneralSettingsViewModel _sut;
 
     [SetUp]

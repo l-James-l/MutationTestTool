@@ -6,7 +6,13 @@
 /// </summary>
 public interface IDarwingDialogService
 {
+    /// <summary>
+    /// Shows an error dialog with the given title and message.
+    /// </summary>
     public void ErrorDialog(string title, string message);
 
+    /// <summary>
+    /// Shows an information dialog with the given title and message.
+    /// </summary>
     public void InfoDialog(string title, string message);
 }
