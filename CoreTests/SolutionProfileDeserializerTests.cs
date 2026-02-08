@@ -67,9 +67,10 @@ public class SolutionProfileDeserializerTests
 
         Assert.That(_mutationSettings.TestProjects, Does.Contain("Project1").And.Contain("Project2"));
         
-        Assert.That(_mutationSettings.IgnoreProjects, Does.Contain("MutateMe"));
+        Assert.That(_mutationSettings.SourceCodeProjects, Does.Contain("MutateMe"));
+        Assert.That(_mutationSettings.IgnoreProjects, Does.Contain("IgnoreMe"));
         
-        Assert.That(_mutationSettings.DisabledMutationTypes, Does.Contain(SpecificMutation.SubtractToAdd));
+        Assert.That(_mutationSettings.DisabledMutationTypes, Does.Contain(SpecificMutation.AddToSubtract));
 
         Assert.That(_mutationSettings.SingleMutantPerLine, Is.False);
     }

@@ -2,16 +2,11 @@
   - Project1
   - Project2
   
-ProjectsToMutate:
+SourceCodeProjects:
   - MutateMe
-  
-SpecificMutations:
-  AddToSubtract: true
-  SubtractToAdd: false
-  
-MutationCategories:
-  Arithmetic: true
-  Logical: true
+IgnoreProjects:
+  - IgnoreMe
+DisabledMutationTypes:
+  - AddToSubtract
 
-GeneralSettings:
-  SingleMutantPerLine: false    
+SingleMutantPerLine: false    

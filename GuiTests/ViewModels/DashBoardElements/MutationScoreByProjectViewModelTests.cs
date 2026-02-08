@@ -20,11 +20,13 @@ public class MutationScoreByProjectViewModelTests
 
     private MutationUpdated _mutationUpdatedEvent;
     private DarwingOperationStatesChangedEvent _solutionLoadedEvent;
+    private SettingChanged _settingChangedEvent;
 
     private MutationScoreByProjectViewModel _vm;
 
     private Action<SyntaxAnnotation> _mutationUpdatedHandler = default!; //Assign default to make compiler happy 
     private Action<DarwingOperation> _solutionLoadedHandler = default!; //Assign default to make compiler happy 
+    private Action<string> _settingUpdatedHandler = default!; //Assign default to make compiler happy 
 
     [SetUp]
     public void SetUp()
@@ -35,9 +37,11 @@ public class MutationScoreByProjectViewModelTests
 
         _mutationUpdatedEvent = Substitute.For<MutationUpdated>();
         _solutionLoadedEvent = Substitute.For<DarwingOperationStatesChangedEvent>();
+        _settingChangedEvent = Substitute.For<SettingChanged>();
 
         _eventAggregator.GetEvent<MutationUpdated>().Returns(_mutationUpdatedEvent);
         _eventAggregator.GetEvent<DarwingOperationStatesChangedEvent>().Returns(_solutionLoadedEvent);
+        _eventAggregator.GetEvent<SettingChanged>().Returns(_settingChangedEvent);
 
         // Capture the subscription callbacks
         _mutationUpdatedEvent
@@ -52,6 +56,9 @@ public class MutationScoreByProjectViewModelTests
                 Arg.Is<Predicate<DarwingOperation>>(x => x.Invoke(DarwingOperation.LoadSolution) && !x.Invoke(DarwingOperation.BuildSolution))))
             .Do(ci => _solutionLoadedHandler = ci.Arg<Action<DarwingOperation>>());
 
+        _settingChangedEvent.When(x => x.Subscribe(Arg.Any<Action<string>>(), Arg.Is(ThreadOption.UIThread), true, Arg.Any<Predicate<string>>()))
+            .Do(ci => _settingUpdatedHandler = ci.Arg<Action<string>>());
+
         _vm = new MutationScoreByProjectViewModel(_eventAggregator, _mutationDiscoveryManager, _solutionProvider);
     }
 
@@ -60,6 +67,7 @@ public class MutationScoreByProjectViewModelTests
     {
         Assert.That(_mutationUpdatedHandler, Is.Not.Null);
         Assert.That(_solutionLoadedHandler, Is.Not.Null);
+        Assert.That(_settingUpdatedHandler, Is.Not.Null);
     }
 
     [Test]
@@ -77,6 +85,26 @@ public class MutationScoreByProjectViewModelTests
 
         // Act
         _solutionLoadedHandler.Invoke(DarwingOperation.LoadSolution);
+
+        // Assert
+        Assert.That(_vm.Projects.Count, Is.EqualTo(2));
+    }
+
+    [Test]
+    public void GivenSolutionAvailable_WhenSettingsUpdated_ThenProjectsAreCreated()
+    {
+        // Arrange
+        IProjectContainer project1 = Substitute.For<IProjectContainer>();
+        IProjectContainer project2 = Substitute.For<IProjectContainer>();
+
+        ISolutionContainer solutionContainer = Substitute.For<ISolutionContainer>();
+        solutionContainer.SolutionProjects.Returns([project1, project2]);
+
+        _solutionProvider.IsAvailable.Returns(true);
+        _solutionProvider.SolutionContainer.Returns(solutionContainer);
+
+        // Act
+        _settingUpdatedHandler.Invoke("");
 
         // Assert
         Assert.That(_vm.Projects.Count, Is.EqualTo(2));
