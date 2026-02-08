@@ -11,5 +11,29 @@ public enum SpecificMutation
     AddToSubtract,
 
     [MutationDescription("Replaces a subtraction with an addition. - => +")]
-    SubtractToAdd
+    SubtractToAdd,
+
+    [MutationDescription("Replaces an equality comparison with an inequality comparison. == => !=")]
+    EqualToNotEqual,
+
+    [MutationDescription("Replaces an inequality comparison with an equality comparison. != => ==")]
+    NotEqualToEqual,
+
+    [MutationDescription("Replaces an increment operation with a decrement. ++ => --")]
+    IncrementToDecrement,
+
+    [MutationDescription("Replaces a decrement operation with an increment. -- => ++")]
+    DecrementToIncrement,
+
+    [MutationDescription("Replace a greater than or equal to with a less than. >= -> <")]
+    GreaterThanOrEqualToLessThan,
+
+    [MutationDescription("Replace a greater than with a less than or equal to. > -> <=")]
+    GreaterThanToLessThanOrEqual,
+
+    [MutationDescription("Replace a less than or equal to with a greater than. <= -> >")]
+    LessThanOrEqualToGreaterThan,
+
+    [MutationDescription("Replace a less than with a greater than or equal to. < -> >=")]
+    LessThanToGreaterThanOrEqualTo,
 }
