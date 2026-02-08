@@ -17,7 +17,7 @@ public class DiscoveredMutation
     private readonly IEventAggregator _eventAggregator;
 
     public DiscoveredMutation(SyntaxAnnotation id, SyntaxNode original, SyntaxNode mutationSwitcher, SyntaxNode mutatedNode,
-        IEventAggregator eventAggregator, MutationCategory category, SpecifcMutation type)
+        IEventAggregator eventAggregator, MutationCategory category, SpecificMutation type)
     {
         ID = id;
         OriginalNode = original;
@@ -81,7 +81,7 @@ public class DiscoveredMutation
     /// <summary>
     /// Gets the specific mutation type associated with this instance.
     /// </summary>
-    public SpecifcMutation SpecificType { get; }
+    public SpecificMutation SpecificType { get; }
 
     /// <summary>
     /// The ID of the document the mutation occurred in.

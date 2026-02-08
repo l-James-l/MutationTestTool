@@ -6,7 +6,7 @@ namespace Mutator.MutationImplementations;
 
 public interface IMutationImplementation
 {
-    SpecifcMutation Mutation { get; }
+    SpecificMutation Mutation { get; }
 
     MutationCategory Category { get; }
 

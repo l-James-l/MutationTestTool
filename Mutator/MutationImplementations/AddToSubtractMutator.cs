@@ -7,7 +7,7 @@ namespace Mutator.MutationImplementations;
 
 public class AddToSubtractMutator : BaseMutationImplementation
 {
-    public override SpecifcMutation Mutation => SpecifcMutation.AddToSubtract;
+    public override SpecificMutation Mutation => SpecificMutation.AddToSubtract;
 
     public override MutationCategory Category => MutationCategory.Arithmetic;
 

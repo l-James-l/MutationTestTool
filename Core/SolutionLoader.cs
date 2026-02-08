@@ -67,6 +67,8 @@ public class SolutionLoader : ISolutionLoader
         }
         
         _mutationSettings.SolutionPath = solutionPath;
+        //Need to load the profile before creating the SolutionContainer so that overridden project types are assigned correctly
+        _slnProfileDeserializer.LoadSlnProfileIfPresent(solutionPath);
 
         SolutionContainer? solutionContainer = TryCreateManager(solutionPath);
         
@@ -74,8 +76,6 @@ public class SolutionLoader : ISolutionLoader
         if (solutionContainer is not null)
         {
             //Do this outside the try catch so that errors caught are only for loading the solution.
-            //Deserializer shall handle its own exceptions.
-            _slnProfileDeserializer.LoadSlnProfileIfPresent(solutionPath);
             DiscoverSourceCodeFiles(solutionContainer);
             _solutionProvider.NewSolution(solutionContainer);
             _statusTracker.FinishOperation(DarwingOperation.LoadSolution, true);

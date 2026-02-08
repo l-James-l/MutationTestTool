@@ -1,4 +1,5 @@
-﻿using Models.Enums;
+﻿using GUI.Services;
+using Models.Enums;
 using Models.Events;
 using Models.SharedInterfaces;
 
@@ -7,23 +8,40 @@ namespace GUI.ViewModels.DashBoardElements;
 public class StatusBarViewModel : ViewModelBase
 {
     private readonly IStatusTracker _statusTracker;
+    private readonly IDarwingDialogService _dialogService;
 
-    public StatusBarViewModel(IStatusTracker statusTracker, IEventAggregator eventAggregator)
+    public StatusBarViewModel(IStatusTracker statusTracker, IEventAggregator eventAggregator, IDarwingDialogService dialogService)
     {
         _statusTracker = statusTracker;
-
+        _dialogService = dialogService;
         eventAggregator.GetEvent<DarwingOperationStatesChangedEvent>().Subscribe(_ => OnOperationStatesChanged(), ThreadOption.UIThread);
     }
 
     private void OnOperationStatesChanged()
     {
-        LoadSolutionState = _statusTracker.CheckStatus(DarwingOperation.LoadSolution);
-        BuildOperationState = _statusTracker.CheckStatus(DarwingOperation.BuildSolution);
-        InitialTestRunState = _statusTracker.CheckStatus(DarwingOperation.TestUnmutatedSolution);
-        MutantDiscoveryState = _statusTracker.CheckStatus(DarwingOperation.DiscoveringMutants);
-        BuildingMutatedSolutionState = _statusTracker.CheckStatus(DarwingOperation.BuildingMutatedSolution);
-        TestingMutantsState = _statusTracker.CheckStatus(DarwingOperation.TestMutants);
+        LoadSolutionState = CheckStatus(DarwingOperation.LoadSolution);
+        BuildOperationState = CheckStatus(DarwingOperation.BuildSolution);
+        InitialTestRunState = CheckStatus(DarwingOperation.TestUnmutatedSolution);
+        MutantDiscoveryState = CheckStatus(DarwingOperation.DiscoveringMutants);
+        BuildingMutatedSolutionState = CheckStatus(DarwingOperation.BuildingMutatedSolution);
+        TestingMutantsState = CheckStatus(DarwingOperation.TestMutants);
         UpdateCompletionPercentage();
+
+        if (TestingMutantsState is OperationStates.Succeeded)
+        {
+            _dialogService.InfoDialog("Testing Completed!", "Testing Complete");
+        }
+    }
+
+    private OperationStates CheckStatus(DarwingOperation operation)
+    {
+        OperationStates state = _statusTracker.CheckStatus(operation);
+        if (state is OperationStates.Failed)
+        {
+            _dialogService.ErrorDialog("Error occurred",
+                $"While performing stage: {operation.ToReadableString()}, an error occurred and testing cannot continue. Check the console for details");
+        }
+        return state;
     }
 
     public float ProgressBarPercentage
