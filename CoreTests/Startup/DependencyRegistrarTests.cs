@@ -51,6 +51,14 @@ internal class DependencyRegistrarTests : DepencyRegisrationTestsHelper
         //IMutationImplementation's
         AssertMutatorRegistration<AddToSubtractMutator>();
         AssertMutatorRegistration<SubtractToAddMutator>();
+        AssertMutatorRegistration<EqualToNotEqualMutator>();
+        AssertMutatorRegistration<NotEqualToEqualMutator>();
+        AssertMutatorRegistration<GreaterThanOrEqualToLessThan>();
+        AssertMutatorRegistration<GreaterThanToLessThanOrEqualTo>();
+        AssertMutatorRegistration<LessThanOrEqualToGreaterThan>();
+        AssertMutatorRegistration<LessThanToGreaterThanOrEqualTo>();
+        AssertMutatorRegistration<IncrementToDecrementMutator>();
+        AssertMutatorRegistration<DecrementToIncrementMutator>();
 
         _services!.ReceivedWithAnyArgs(_expectedRegistrations).Add(default!);
     }
