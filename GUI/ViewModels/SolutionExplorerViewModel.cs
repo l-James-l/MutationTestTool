@@ -9,12 +9,7 @@ using System.IO;
 
 namespace GUI.ViewModels;
 
-public interface ISolutionExplorerViewModel
-{
-
-}
-
-public class SolutionExplorerViewModel : ViewModelBase, ISolutionExplorerViewModel
+public class SolutionExplorerViewModel : ViewModelBase
 {
     private const string _defaultFileDisplayHeader = "No File Selected";
     private readonly IEventAggregator _eventAggregator;
@@ -79,7 +74,7 @@ public class SolutionExplorerViewModel : ViewModelBase, ISolutionExplorerViewMod
             {
                 SourceCode = line,
                 LineNumber = index + 1,
-                MutationsOnLine = [.. selectedFile.MutationInFile.Where(x => x.LineSpan.StartLinePosition.Line == index && x.Status is not MutantStatus.CausedBuildError)]
+                MutationsOnLine = [.. selectedFile.MutationInFile.Where(x => x.LineSpan.StartLinePosition.Line == index && x.Status.IncludeInReport())]
             })];
 
             FileDetails.AddRange(lineDetails);

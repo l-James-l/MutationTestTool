@@ -1,5 +1,6 @@
 
 using Core.Interfaces;
+using Serilog;
 using System.Diagnostics;
 
 namespace Core;
@@ -22,7 +23,8 @@ public class ProcessWrapper : Process, IProcessWrapper
             {
                 if (y.Data is not null) 
                 { 
-                    Output.Add(y.Data); 
+                    Output.Add(y.Data);
+                    Log.Debug(y.Data);
                 } 
             };
         }
@@ -34,6 +36,7 @@ public class ProcessWrapper : Process, IProcessWrapper
                 if (y.Data is not null)
                 {
                     Errors.Add(y.Data);
+                    Log.Error(y.Data);
                 }
             };
         }

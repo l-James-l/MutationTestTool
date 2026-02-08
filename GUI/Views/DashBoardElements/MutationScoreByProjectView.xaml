@@ -100,7 +100,7 @@
                                            Foreground="LightGray"/>
 
                                 <TextBlock Grid.Row="2" Grid.Column="4"
-                                           Text="{Binding TotalMutations, StringFormat={}{0} Total}"
+                                           Text="{Binding TotalMutations, StringFormat={}{0} Total Tested}"
                                            TextAlignment="Right"
                                            FontWeight="Light"
                                            FontSize="10"

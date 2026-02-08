@@ -92,10 +92,10 @@ public class SummaryCountsViewModel : ViewModelBase
 
     private void OnMutationUpdated()
     {
-        TotalMutationCount.Value = _mutationDiscoveryManager.DiscoveredMutations.Count;
-        KilledMutationCount.Value = _mutationDiscoveryManager.DiscoveredMutations.Count(x => x.Status is MutantStatus.Killed);
-        SurvivedMutationCount.Value = _mutationDiscoveryManager.DiscoveredMutations.Count(x => x.Status is MutantStatus.Survived);
-        int validCount = _mutationDiscoveryManager.DiscoveredMutations.Count(x => x.Status is not MutantStatus.CausedBuildError);
+        TotalMutationCount.Value = _mutationDiscoveryManager.DiscoveredMutations.Count(x => x.Status.IncludeInReport());
+        KilledMutationCount.Value = _mutationDiscoveryManager.DiscoveredMutations.Count(x => x.Status.IncludeInKilledCount());
+        SurvivedMutationCount.Value = _mutationDiscoveryManager.DiscoveredMutations.Count(x => x.Status.IncludeInSurvivedCount());
+        int validCount = _mutationDiscoveryManager.DiscoveredMutations.Count(x => x.Status.IncludeInTotalCount());
         if (validCount > 0)
         {
             MutationScore.Value = KilledMutationCount.Value*100/validCount;

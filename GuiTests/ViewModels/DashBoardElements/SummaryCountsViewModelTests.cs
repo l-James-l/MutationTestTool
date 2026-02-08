@@ -115,7 +115,7 @@ public class SummaryCountsViewModelTests
             CreateMutation(MutantStatus.Killed),
             CreateMutation(MutantStatus.Killed),
             CreateMutation(MutantStatus.CausedBuildError),
-            CreateMutation(MutantStatus.CausedBuildError)
+            CreateMutation(MutantStatus.IgnoredMultipleOnLine)
         };
 
         _mutationDiscoveryManager.DiscoveredMutations.Returns(mutations);
@@ -126,7 +126,7 @@ public class SummaryCountsViewModelTests
         _updateCallback.Invoke(default);
 
         // Assert
-        Assert.That(vm.TotalMutationCount.Value, Is.EqualTo(4));
+        Assert.That(vm.TotalMutationCount.Value, Is.EqualTo(3));
         Assert.That(vm.KilledMutationCount.Value, Is.EqualTo(2));
         Assert.That(vm.SurvivedMutationCount.Value, Is.Zero);
 
@@ -153,7 +153,7 @@ public class SummaryCountsViewModelTests
         _updateCallback.Invoke(default);
 
         // Assert
-        Assert.That(vm.TotalMutationCount.Value, Is.EqualTo(2));
+        Assert.That(vm.TotalMutationCount.Value, Is.Zero);
         Assert.That(vm.KilledMutationCount.Value, Is.Zero);
         Assert.That(vm.SurvivedMutationCount.Value, Is.Zero);
 

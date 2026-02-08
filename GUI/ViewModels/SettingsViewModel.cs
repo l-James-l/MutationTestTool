@@ -7,12 +7,7 @@ using YamlDotNet.Serialization;
 
 namespace GUI.ViewModels;
 
-public interface ISettingsViewModel
-{
-
-}
-
-public class SettingsViewModel : ViewModelBase, ISettingsViewModel
+public class SettingsViewModel : ViewModelBase
 {
     private readonly IMutationSettings _settings;
     private readonly IDarwingDialogService _dialogService;

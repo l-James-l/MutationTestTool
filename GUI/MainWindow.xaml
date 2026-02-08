@@ -133,7 +133,42 @@
                         VerticalAlignment="Center"
                         Margin="0,0,8,0"
                         Panel.ZIndex="1">
-                
+
+                <Button Command="{Binding ToggleConsole}">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border CornerRadius="5"
+                                    Background="#3B82F6"
+                                    Padding="10, 5">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <TextBlock Text="&#xE756;" 
+                                               FontFamily="Segoe Fluent Icons" 
+                                               FontSize="14" 
+                                               Foreground="White" 
+                                               VerticalAlignment="Center" 
+                                               Margin="0,0,6,0"/>
+                                    <TextBlock Text="Toggle Console" 
+                                               Foreground="White" 
+                                               FontWeight="SemiBold" 
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
+                        </ControlTemplate>
+                    </Button.Template>
+
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Cursor" Value="Hand"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+
+                <Border Width="1" Background="Gray" Margin="10, 0 "/>
+
                 <!--Solution actions dropdown menu-->
                 <Menu Name="SolutionActionDropdownMenu" Background="Transparent">
                     <!--By default, the menu asset would have a icons column, we dont want that because it formats weirdly so define our own template-->

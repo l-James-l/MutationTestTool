@@ -2,12 +2,7 @@
 
 namespace GUI.ViewModels;
 
-public interface IDashBoardViewModel
-{
-
-}
-
-public class DashBoardViewModel : ViewModelBase, IDashBoardViewModel
+public class DashBoardViewModel : ViewModelBase
 {
     public StatusBarViewModel StatusBarViewModel { get; set; }
     public MutationScoreByProjectViewModel MutationScoreByProjectViewModel { get; }

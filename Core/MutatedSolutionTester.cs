@@ -1,4 +1,4 @@
-﻿using Core.IndustrialEstate;
+using Core.IndustrialEstate;
 using Core.Interfaces;
 using Models;
 using Models.Enums;

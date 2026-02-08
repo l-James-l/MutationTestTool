@@ -16,25 +16,9 @@ public partial class App : Application
         
         IServiceProvider serviceProvider = new GuiDependencyRegistrar(new ServiceCollection()).Build();
 
-        // This allows viewing of backend logs in real time when configured from launch settings
-        if (e.Args.Length > 0 && e.Args[0] == "--console")
-        {
-            ShowConsole();
-        }
-
         MainWindow mainWindow = serviceProvider.GetRequiredService<MainWindow>();
         MainWindowViewModel mainWindowViewModel = serviceProvider.GetRequiredService<MainWindowViewModel>();
         mainWindow.DataContext = mainWindowViewModel;
         mainWindow.Show();
     }
-
-    [DllImport("kernel32.dll")]
-    static extern bool AllocConsole();
-
-    public void ShowConsole()
-    {
-        AllocConsole();
-        Console.WriteLine("GUI launching console for debugging. Dev mode only.");
-    }
-
 }

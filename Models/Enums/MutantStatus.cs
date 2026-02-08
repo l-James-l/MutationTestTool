@@ -2,11 +2,30 @@
 
 public enum MutantStatus
 {
+    //-----------------------------
+    // The following are all invalid mutations that should not be included in the report
+    // -----------------------------
+
     /// <summary>
     /// Mutation has been applied, but we dont know where it is because we either haven't rediscovered it yet,
     /// or weren't able to rediscover it.
     /// </summary>
     Discovered,
+
+    /// <summary>
+    /// Mutant has been removed due to it causing build errors.
+    /// </summary>
+    CausedBuildError,
+
+    //-----------------------------
+    // The following are all valid mutations that should be included in the report
+    // ----------------------------
+
+    /// <summary>
+    /// Where the settings specify that multiple mutations on the same line should be ignored, this status is used to mark the mutants that have been ignored.
+    /// They are not tested, but we want to keep track of them so we can report on how many mutants were ignored due to this setting.
+    /// </summary>
+    IgnoredMultipleOnLine,
 
     /// <summary>
     /// Mutation has been applied and we have successfully rediscover it.
@@ -15,9 +34,9 @@ public enum MutantStatus
     Available,
 
     /// <summary>
-    /// Mutant has been removed due to it causing build errors.
+    /// Mutant hsa been applied, but is not covered by any tests, so dont test it and treat it as survived.
     /// </summary>
-    CausedBuildError,
+    NoCoverage,
 
     /// <summary>
     /// Mutant is currently active and a test run is ongoing.
@@ -34,3 +53,27 @@ public enum MutantStatus
     /// </summary>
     Killed
 }
+
+public static class MutationStatusMethods
+{
+    public static bool IncludeInReport(this MutantStatus mutantStatus)
+    {
+        return mutantStatus >= MutantStatus.IgnoredMultipleOnLine;
+    }
+
+    public static bool IncludeInTotalCount(this MutantStatus mutantStatus)
+    {
+        return mutantStatus >= MutantStatus.Available;
+    }
+
+    public static bool IncludeInKilledCount(this MutantStatus mutantStatus)
+    {
+        return mutantStatus == MutantStatus.Killed;
+    }
+
+    public static bool IncludeInSurvivedCount(this MutantStatus mutantStatus)
+    {
+        return mutantStatus is MutantStatus.Survived or MutantStatus.NoCoverage;
+    }
+}
+

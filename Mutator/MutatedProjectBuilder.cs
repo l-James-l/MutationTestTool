@@ -59,7 +59,10 @@ public class MutatedProjectBuilder : IStartUpProcess
 
         RestoreDependencies();
         _statusTracker.FinishOperation(DarwingOperation.BuildingMutatedSolution, allProjectsBuilt);
-        _mutatedSolutionTester.RunTestsOnMutatedSolution();
+        if (allProjectsBuilt)
+        {
+            _mutatedSolutionTester.RunTestsOnMutatedSolution();
+        }
     }
 
     private bool EmitAllChanges()
@@ -182,7 +185,8 @@ public class MutatedProjectBuilder : IStartUpProcess
             {
                 Log.Information("Attempting to address a build failure in file: {path}", failureLocation.Path);
 
-                IEnumerable<DiscoveredMutation> mutationsInFile = _mutationDiscovery.DiscoveredMutations.Where(x => x.Document == document && x.Status >= MutantStatus.Available);
+                // Ignore mutants with the Discovered status, because that means we couldn't rediscover them, so dont know where they are, and wouldn't be able to remove them
+                IEnumerable<DiscoveredMutation> mutationsInFile = _mutationDiscovery.DiscoveredMutations.Where(x => x.Document == document && x.Status > MutantStatus.Discovered);
 
                 //We want to find any mutation where the error occurs partially or entirely inside it
                 //We do this by finding all mutations which 'start' before the error ends,

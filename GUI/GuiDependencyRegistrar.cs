@@ -24,6 +24,7 @@ public class GuiDependencyRegistrar : DependencyRegistrar
     {
         Services.AddSingleton<IFileSelectorService, FileSelectorService>();
         Services.AddSingleton<IDarwingDialogService, DialogService>();
+        Services.AddSingleton<IConsoleService, ConsoleService>();
     }
 
     private void RegisterViewModels()
@@ -31,17 +32,17 @@ public class GuiDependencyRegistrar : DependencyRegistrar
         Services.AddSingleton<MainWindowViewModel>();
 
         //Dashboard
-        Services.AddSingleton<IDashBoardViewModel, DashBoardViewModel>();
+        Services.AddSingleton<DashBoardViewModel>();
         Services.AddSingleton<StatusBarViewModel>();
         Services.AddSingleton<MutationScoreByProjectViewModel>();
         Services.AddSingleton<SummaryCountsViewModel>();
 
         //Solution Explorer 
-        Services.AddSingleton<ISolutionExplorerViewModel, SolutionExplorerViewModel>();
+        Services.AddSingleton<SolutionExplorerViewModel>();
         Services.AddSingleton<FileExplorerViewModel>();
         
         //Settings
-        Services.AddSingleton<ISettingsViewModel, SettingsViewModel>();
+        Services.AddSingleton<SettingsViewModel>();
         Services.AddSingleton<ProjectTypeCollectionSettings>();
         Services.AddSingleton<GeneralSettingsViewModel>();
         Services.AddSingleton<DisabledMutationTypesViewModel>();
