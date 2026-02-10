@@ -146,6 +146,27 @@
                       Style="{StaticResource SwitchStyle}"
                       IsChecked="{Binding SkipTestingNoActiveMutants}"/>
         </Grid>
+        
+        <!--Advanced Project analysis-->
+        <Grid Margin="0,0,0,25">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" Margin="0,0,40,0">
+                <TextBlock Text="Use Advanced Projec Type Analysis" 
+                           Style="{StaticResource SettingHeader}"/>
+                <TextBlock Text="If true, more advanced analysis will be used to determine test projects. This is considerably slower, and not typically necisarry as stardard detection is usally suffcient." 
+                           Style="{StaticResource SettingSubHeader}"/>
+            </StackPanel>
+
+            <CheckBox Grid.Column="1" 
+                      Style="{StaticResource SwitchStyle}"
+                      IsChecked="{Binding UseAdvancedProjectTypeAnalysis}"/>
+        </Grid>
+        
+        
 
     </StackPanel>
 </UserControl>

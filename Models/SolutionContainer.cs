@@ -40,7 +40,7 @@ public class SolutionContainer: ISolutionContainer
                 continue;
             }
             IProjectAnalyzer projectAnalyzer = analyzerManager.GetProject(project.FilePath);
-            ProjectContainer newProjContainer = new(project, projectAnalyzer);
+            ProjectContainer newProjContainer = new(project, projectAnalyzer, settings.UseAdvancedProjectTypeAnalysis);
             AllProjects.Add(newProjContainer);
             
             //Override the determined project type value if the loaded settings specify its type.
