@@ -1,10 +1,13 @@
 using Core.IndustrialEstate;
 using Core.Interfaces;
+using Microsoft.CodeAnalysis.VisualBasic.Syntax;
 using Models;
 using Models.Enums;
 using Models.SharedInterfaces;
 using Mutator;
 using Serilog;
+using System.ComponentModel;
+using System.Reflection;
 
 namespace CLI;
 
@@ -16,19 +19,22 @@ public class CLIApp
     private const string TestCommand = "--test";
     private const string SettingsCommand = "--setting";
     private const string QuitCommand = "--quit";
-    private const string HelpCommand = "--help";
+    private const string HelpCommand = "--help"; 
+    private const string ReportCommand = "--report"; 
 
     private readonly IMutationSettings _mutationSettings;
     private readonly IStatusTracker _statusTracker;
     private readonly ISolutionLoader _solutionLoader;
     private readonly ISolutionBuilder _solutionBuilder;
     private readonly IMutationRunInitiator _mutationRunInitiator;
+    private readonly IMutationDiscoveryManager _mutationDiscoveryManager;
     private readonly ICancellationTokenWrapper _cancelationToken;
 
 
     public CLIApp(IMutationSettings mutationSettings, IStatusTracker statusTracker,
         ICancelationTokenFactory cancelationTokenFactory, ISolutionLoader solutionLoader,
-        ISolutionBuilder solutionBuilder, IMutationRunInitiator mutationRunInitiator)
+        ISolutionBuilder solutionBuilder, IMutationRunInitiator mutationRunInitiator, 
+        IMutationDiscoveryManager mutationDiscoveryManager)
     {
         ArgumentNullException.ThrowIfNull(mutationSettings);
         ArgumentNullException.ThrowIfNull(statusTracker);
@@ -42,6 +48,7 @@ public class CLIApp
         _solutionLoader = solutionLoader;
         _solutionBuilder = solutionBuilder;
         _mutationRunInitiator = mutationRunInitiator;
+        _mutationDiscoveryManager = mutationDiscoveryManager;
         _cancelationToken = cancelationTokenFactory.Generate();
     }
 
@@ -105,10 +112,13 @@ public class CLIApp
                 break;
             case TestCommand:
                 //run mutation testing
-                InitiateTestSession(out response);
+                InitiateTestSession(commandParams, out response);
                 break;
             case SettingsCommand:
                 // Amend a setting
+                break;
+            case ReportCommand:
+                ReportResults(commandParams);
                 break;
             case HelpCommand:
                 // Output available commands
@@ -157,7 +167,8 @@ public class CLIApp
         }
         _solutionBuilder.InitialBuild();
     }
-    private void InitiateTestSession(out string? response)
+
+    private void InitiateTestSession(string[] commandParams, out string? response)
     {
         response = null;
 
@@ -173,8 +184,106 @@ public class CLIApp
             return;
         }
 
-        // TODO parse command params so we can update any overridden settings.
+        PropertyInfo[] propertyInfos = typeof(IMutationSettings).GetProperties();
+        foreach (string setting in commandParams)
+        {
+            string[] settingPair = setting.Split("=");
+            if (settingPair.Length != 2)
+            {
+                continue;
+            }
+            string settingName = settingPair[0];
+            string settingStringValue = settingPair[1];
+
+            //get the property corresponding to the setting name
+            PropertyInfo? propertyInfo = propertyInfos.FirstOrDefault(x => x.Name == settingPair.First());
+            if (propertyInfo is null)
+            {
+                continue;
+            }
+
+            try
+            {
+                object? parsedValue = ParseValue(settingStringValue, propertyInfo.PropertyType);
+                propertyInfo.SetValue(_mutationSettings, parsedValue);
+                Log.Information("overridden setting: {name}", settingName);
+            }
+            catch
+            {
+                Log.Error("Could not parse setting: {name}, with value: {value}", settingName, settingStringValue);
+            }
+        }
+
         _mutationRunInitiator.Run();
+
+        int totalCount = _mutationDiscoveryManager.DiscoveredMutations.Count(x => x.Status.IncludeInTotalCount());
+        int killedCount = _mutationDiscoveryManager.DiscoveredMutations.Count(x => x.Status.IncludeInKilledCount());
+        int survivedCount = _mutationDiscoveryManager.DiscoveredMutations.Count(x => x.Status.IncludeInSurvivedCount());
+        Log.Information("Mutation testing complete. Total mutants discovered: {TotalCount}", totalCount);
+        Log.Information("Killed mutants: {KilledCount}", killedCount);
+        Log.Information("Survived mutants: {SurvivedCount}", survivedCount);
+
+        Log.Information("For more detailed reporting, use the --report command.");
+    }
+
+    private object? ParseValue(string value, Type targetType)
+    {
+        // 1. Handle Lists (e.g., [proj1, proj2])
+        if (targetType == typeof(List<string>))
+        {
+            return value.Trim('[', ']')
+                        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                        .ToList();
+        }
+
+        // 2. Handle Enums
+        if (targetType.IsEnum)
+        {
+            return Enum.Parse(targetType, value, true);
+        }
+
+        // 3. Handle Primitives (int, bool, string, etc.)
+        TypeConverter converter = TypeDescriptor.GetConverter(targetType);
+        return converter.ConvertFromInvariantString(value);
+    }
+
+    private void ReportResults(string[] commandParams)
+    {
+        IEnumerable<IGrouping<string, DiscoveredMutation>> allGroupings = _mutationDiscoveryManager.DiscoveredMutations.GroupBy(x => Path.GetFileName(x.LineSpan.Path));
+        if (commandParams.Length == 0)
+        {
+            // No params means report on everything.
+            Log.Information("Reporting on all tests:");
+            foreach (IGrouping<string, DiscoveredMutation> fileGrouping in allGroupings)
+            {
+                Log.Information("File: {FileName}", fileGrouping.Key);
+                foreach (DiscoveredMutation mutation in fileGrouping)
+                {
+                    Log.Information("Line {LineNumber}: {Status}", mutation.LineSpan.StartLinePosition.Line + 1, mutation.Status);
+                    Log.Information("Original code: {OriginalCode}", mutation.OriginalNode.ToString().Trim());
+                    Log.Information("Mutated code: {MutatedCode}", mutation.MutatedNode.ToString().Trim());
+                    Log.Information(""); // Blank line for readability.
+                }
+            }
+        }
+        else
+        {
+            foreach (string item in commandParams)
+            {
+                IGrouping<string, DiscoveredMutation>? fileGrouping = allGroupings.FirstOrDefault(x => x.Key == item);
+                if (fileGrouping is not null)
+                {
+                    Log.Information("File: {FileName}", fileGrouping.Key);
+                    foreach (DiscoveredMutation mutation in fileGrouping)
+                    {
+                        Log.Information("Line {LineNumber}: {Status}", mutation.LineSpan.StartLinePosition.Line + 1, mutation.Status);
+                        Log.Information("Original code: {OriginalCode}", mutation.OriginalNode.ToString().Trim());
+                        Log.Information("Mutated code: {MutatedCode}", mutation.MutatedNode.ToString().Trim());
+                        Log.Information(""); // Blank line for readability.
+                    }
+                }
+            }
+        }
     }
 
     private void HelpOutputCommand()
@@ -183,8 +292,9 @@ public class CLIApp
         {LoadCommand}:      Provide a path to a solution file so that Darwing can load the source code and perform a build.
         {BuildCommand}:     Will build the solution at the previously provided solution location. Note that will not reload any changes made to the solutions source code since the last build into Darwing, but as the build is performed 'in place', the build will include them. In the instance changes to the source code have been made, please use '{ReloadCommand}'.
         {ReloadCommand}:    Will reload the source code for the already loaded solution.
-        {TestCommand}:      Will start a mutation run on the loaded code base. Note a loaded solution with a successful build are required.
+        {TestCommand}:      Will start a mutation run on the loaded code base. Note a loaded solution with a successful build are required. Can specify settings to override with the format: 'SettingNme=SettingValue'
         {SettingsCommand}:  Change the specified setting to the specified value.
+        {ReportCommand}:    Report on results. If no params specified, all mutations reported. Can specify file names, so that only mutations in that file are reported.
         {QuitCommand}:      Terminate the application.
         {HelpCommand}:      Help command.
         """);
