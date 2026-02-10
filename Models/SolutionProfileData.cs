@@ -1,11 +1,15 @@
 ﻿using Models.Enums;
-using System.ComponentModel;
 
 namespace Models;
 
 /// <summary>
 /// Data class for solution profile information.
 /// Data read from yml file in solution root folder.
+/// 
+/// IMPORTANT: When any new properties are added to this class, they should be made nullable and default to null.
+/// The logic in SolutionProfileDeserializer should be updated to only assign values from the profile if they are not null. 
+/// This allows for backwards compatibility with existing solution profiles when new properties are added.
+/// Ensure any new properties are added to <see cref="SolutionProfileDeserializer.AssignSettingsFromProfile"/>
 /// </summary>
 public class SolutionProfileData
 {
@@ -13,29 +17,28 @@ public class SolutionProfileData
     /// List of names of the test projects in the solution.
     /// At present, this is treated as a comprehensive list of all test projects in the solution.
     /// </summary>
-    public List<string> TestProjects { get; set; } = [];
+    public List<string>? TestProjects { get; set; } = null;
 
     /// <summary>
     /// The names of any source code projects that should be ignored and not mutated.
     /// </summary>
-    public List<string> IgnoreProjects { get; set; } = [];
+    public List<string>? IgnoreProjects { get; set; } = null;
 
     /// <summary>
     /// The names of source code projects. This is the default state for a loaded project so should only be specified if a project
     /// is wrongly being determined to be a test project, but then this is likely a symptom of another issue in the project.
     /// </summary>
-    public List<string> SourceCodeProjects { get; set; } = [];
+    public List<string>? SourceCodeProjects { get; set; } = null;
 
     /// <summary>
     /// Allows enabling or disabling specific mutation types.
     /// </summary>
-    public List<SpecificMutation> DisabledMutationTypes { get; set; } = [];
+    public List<SpecificMutation>? DisabledMutationTypes { get; set; } = null;
 
     /// <summary>
-    /// TODO: make this do something.
+    /// Only test a single mutation per line
     /// </summary>
-    [DefaultValue(true)]
-    public bool SingleMutantPerLine { get; set; } = true;
+    public bool? SingleMutantPerLine { get; set; } = null;
 
     /// <summary>
     /// Allows setting of custom timeouts for when a build process is considered failed.
@@ -44,8 +47,7 @@ public class SolutionProfileData
     /// Value is in seconds.
     /// Default value is 30 seconds, which should be more than enough for most projects, but can be changed if needed.
     /// </summary>
-    [DefaultValue(30)]
-    public int BuildTimeout { get; set; } = 30;
+    public int? BuildTimeout { get; set; } = null;
 
     /// <summary>
     /// Allows setting of a custom timeout for when a test run will be considered failed.
@@ -53,11 +55,16 @@ public class SolutionProfileData
     /// Value is in seconds.
     /// Default value an hour.
     /// </summary>
-    [DefaultValue(1200)]
-    public int TestRunTimeout { get; set; } = 1200;
+    public int? TestRunTimeout { get; set; } = null;
 
     /// <summary>
     /// Will skip the stage after mutant discovery of running all tests with no mutant activated. Can save time but not recommended.
     /// </summary>
-    public bool SkipTestingNoActiveMutants { get; set; } = false;
+    public bool? SkipTestingNoActiveMutants { get; set; } = null;
+
+    /// <summary>
+    /// If true, will use the more advanced project type analysis which uses build analysis to determine the project type.
+    /// This is more accurate, but also significantly increases the time taken to load the solution, so is not on by default.
+    /// </summary>
+    public bool? UseAdvancedProjectTypeAnalysis { get; set; } = null;
 }

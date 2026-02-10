@@ -30,5 +30,8 @@ public class MutationSettings : IMutationSettings
 
     /// <inheritdoc/>
     public List<SpecificMutation> DisabledMutationTypes { get; set; } = [];
+
+    /// <inheritdoc/>
+    public bool UseAdvancedProjectTypeAnalysis { get; set; } = false;
 }
 

@@ -54,14 +54,16 @@ public class SolutionProfileDeserializer : ISolutionProfileDeserializer
 
     private void AssignSettingsFromProfile(SolutionProfileData profileData)
     {
-        _mutationSettings.TestProjects = profileData.TestProjects;
-        _mutationSettings.IgnoreProjects = profileData.IgnoreProjects;
-        _mutationSettings.SourceCodeProjects = profileData.SourceCodeProjects;
-        _mutationSettings.DisabledMutationTypes = profileData.DisabledMutationTypes;
+        // Where the profile setting is null, use the default from settings
+        _mutationSettings.TestProjects = profileData.TestProjects ?? _mutationSettings.TestProjects;
+        _mutationSettings.IgnoreProjects = profileData.IgnoreProjects ?? _mutationSettings.IgnoreProjects;
+        _mutationSettings.SourceCodeProjects = profileData.SourceCodeProjects ?? _mutationSettings.SourceCodeProjects;
+        _mutationSettings.DisabledMutationTypes = profileData.DisabledMutationTypes ?? _mutationSettings.DisabledMutationTypes;
 
-        _mutationSettings.SingleMutantPerLine = profileData.SingleMutantPerLine;
-        _mutationSettings.BuildTimeout = profileData.BuildTimeout;
-        _mutationSettings.TestRunTimeout = profileData.TestRunTimeout;
-        _mutationSettings.SkipTestingNoActiveMutants = profileData.SkipTestingNoActiveMutants;
+        _mutationSettings.SingleMutantPerLine = profileData.SingleMutantPerLine ?? _mutationSettings.SingleMutantPerLine;
+        _mutationSettings.BuildTimeout = profileData.BuildTimeout ?? _mutationSettings.BuildTimeout;
+        _mutationSettings.TestRunTimeout = profileData.TestRunTimeout ?? _mutationSettings.TestRunTimeout;
+        _mutationSettings.SkipTestingNoActiveMutants = profileData.SkipTestingNoActiveMutants ?? _mutationSettings.SkipTestingNoActiveMutants;
+        _mutationSettings.UseAdvancedProjectTypeAnalysis = profileData.UseAdvancedProjectTypeAnalysis ?? _mutationSettings.UseAdvancedProjectTypeAnalysis;
     }
 }

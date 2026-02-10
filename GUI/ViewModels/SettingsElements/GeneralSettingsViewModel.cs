@@ -83,4 +83,17 @@ public class GeneralSettingsViewModel : ViewModelBase
             }
         }
     }
+
+    public bool UseAdvancedProjectTypeAnalysis
+    {
+        get;
+        set
+        {
+            SetProperty(ref field, value);
+            if (value != _settings.UseAdvancedProjectTypeAnalysis)
+            {
+                _settings.UseAdvancedProjectTypeAnalysis = value;
+            }
+        }
+    }
 }

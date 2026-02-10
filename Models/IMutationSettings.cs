@@ -52,4 +52,10 @@ public interface IMutationSettings
     /// List of any disabled mutation types.
     /// </summary>
     public List<SpecificMutation> DisabledMutationTypes { get; set; }
+
+    /// <summary>
+    /// If true, will use the more advanced project type analysis which uses build analysis to determine the project type.
+    /// This is more accurate, but also significantly increases the time taken to load the solution, so is not on by default.
+    /// </summary>
+    public bool UseAdvancedProjectTypeAnalysis { get; set; }
 }
