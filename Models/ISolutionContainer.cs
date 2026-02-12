@@ -34,6 +34,11 @@ public interface ISolutionContainer
     public AdhocWorkspace Workspace { get; }
 
     /// <summary>
+    /// The path to the directory containing the solution file.
+    /// </summary>
+    public string DirectoryPath { get; }
+
+    /// <summary>
     /// When we apply changes to projects, it creates a new project rather than altering the existing one.
     /// This means that we need to reassign the project properties we precomputed.
     /// </summary>

@@ -1,7 +1,6 @@
 using Buildalyzer;
 using Core.IndustrialEstate;
 using Core.Interfaces;
-using LibGit2Sharp;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Models;
@@ -80,6 +79,8 @@ public class SolutionLoader : ISolutionLoader
             DiscoverSourceCodeFiles(solutionContainer);
             _solutionProvider.NewSolution(solutionContainer);
             _statusTracker.FinishOperation(DarwingOperation.LoadSolution, true);
+
+            new GitDiffManager(_solutionProvider, _mutationSettings).EstablishDiff();
             _solutionBuilder.InitialBuild();
         }
         else
@@ -152,36 +153,5 @@ public class SolutionLoader : ISolutionLoader
         string code = File.ReadAllText(path);
         SyntaxTree tree = CSharpSyntaxTree.ParseText(code);
         return tree.WithFilePath(path);
-    }
-}
-
-
-public class GitDiffManager
-{
-    private readonly ISolutionProvider _solutionProvider;
-
-    public GitDiffManager(ISolutionProvider solutionProvider)
-    {
-        _solutionProvider = solutionProvider;
-    }
-
-    public void EstablishDiff(bool head=false, string compareBranch = "master") 
-    { 
-        var repo = new Repository(_solutionProvider.SolutionContainer.Solution.FilePath);
-        if (head)
-        {
-            Patch patch = repo.Diff.Compare<Patch>(repo.Head.Tip.Tree, DiffTargets.WorkingDirectory, includeUntracked: true);
-            patch.
-        }
-        else if (FindBranch(repo, compareBranch) is Branch branch)
-        {
-            Patch patch = repo.Diff.Compare<Patch>(branch.Tip.Tree, DiffTargets.WorkingDirectory);
-        }
-    }
-
-    private Branch? FindBranch(Repository repo, string name="master")
-    {
-        Branch? branch = repo.Branches.FirstOrDefault(x => x.RemoteName == name || x.RemoteName == $"origin/{name}");
-        return branch;
     }
 }
