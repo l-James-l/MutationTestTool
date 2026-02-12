@@ -21,7 +21,7 @@ public class ProjectContainer : IProjectContainer
         _project = project;
         CsprojFilePath = project.FilePath;
         DirectoryPath = Path.GetDirectoryName(_project.FilePath) ??
-            CsprojFilePath.Remove(CsprojFilePath.Count() - _project.Name.Count());
+            CsprojFilePath.Remove(CsprojFilePath.Length - _project.Name.Length);
 
         Log.Information("Determining type of project: {proj}", Name);
         if (advancedTypeAnalysis)

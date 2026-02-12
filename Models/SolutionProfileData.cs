@@ -31,7 +31,7 @@ public class SolutionProfileData
     public List<string>? SourceCodeProjects { get; set; } = null;
 
     /// <summary>
-    /// Allows enabling or disabling specific mutation types.
+    /// Allows disabling specific mutation types.
     /// </summary>
     public List<SpecificMutation>? DisabledMutationTypes { get; set; } = null;
 

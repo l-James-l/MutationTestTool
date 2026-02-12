@@ -1,6 +1,7 @@
 using Buildalyzer;
 using Core.IndustrialEstate;
 using Core.Interfaces;
+using LibGit2Sharp;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Models;
@@ -16,7 +17,7 @@ namespace Core;
 ///     - Locating the solution, and initializing the solution container
 ///     - Checking for a solution profile
 ///     - Finding source code files in each project and adding them to the project containers
-///     - TODO : Finding test projects
+///     - Finding test projects
 ///     - Triggering an initial build of the solution
 ///     
 /// </summary>
@@ -128,7 +129,6 @@ public class SolutionLoader : ISolutionLoader
                 Log.Information($"Discovered: {file}");
                 SyntaxTree syntaxTree = GetSyntaxTree(file);
 
-                solutionContainer.Solution.GetDocumentId(syntaxTree);
                 if (solutionContainer.Solution.GetDocumentId(syntaxTree) is { } documentId)
                 {
                     project.UnMutatedSyntaxTrees.Add(documentId, syntaxTree);
@@ -152,5 +152,36 @@ public class SolutionLoader : ISolutionLoader
         string code = File.ReadAllText(path);
         SyntaxTree tree = CSharpSyntaxTree.ParseText(code);
         return tree.WithFilePath(path);
+    }
+}
+
+
+public class GitDiffManager
+{
+    private readonly ISolutionProvider _solutionProvider;
+
+    public GitDiffManager(ISolutionProvider solutionProvider)
+    {
+        _solutionProvider = solutionProvider;
+    }
+
+    public void EstablishDiff(bool head=false, string compareBranch = "master") 
+    { 
+        var repo = new Repository(_solutionProvider.SolutionContainer.Solution.FilePath);
+        if (head)
+        {
+            Patch patch = repo.Diff.Compare<Patch>(repo.Head.Tip.Tree, DiffTargets.WorkingDirectory, includeUntracked: true);
+            patch.
+        }
+        else if (FindBranch(repo, compareBranch) is Branch branch)
+        {
+            Patch patch = repo.Diff.Compare<Patch>(branch.Tip.Tree, DiffTargets.WorkingDirectory);
+        }
+    }
+
+    private Branch? FindBranch(Repository repo, string name="master")
+    {
+        Branch? branch = repo.Branches.FirstOrDefault(x => x.RemoteName == name || x.RemoteName == $"origin/{name}");
+        return branch;
     }
 }
