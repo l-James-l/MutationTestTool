@@ -211,7 +211,7 @@ public class CLIApp
                 object? parsedValue = ParseValue(settingStringValue, propertyInfo.PropertyType);
                 propertyInfo.SetValue(_mutationSettings, parsedValue);
                 Log.Information("overridden setting: {name}", settingName);
-                HandleProjectTypeSettingUpdate(propertyInfo.Name);
+                HandleProjectTypeSettingUpdate(propertyInfo.Name, parsedValue is List<string> list ? list : []);
             }
             catch
             {
@@ -247,7 +247,7 @@ public class CLIApp
                         nameof(IMutationSettings.IgnoreProjects) => ProjectType.Ignore, 
                         _ => changedProject.ProjectType
                     };
-                    Log.Information("Project {ProjectName} set to type Test", proj.Name);
+                    Log.Information("Project {ProjectName} set to type {type}", changedProject.Name, changedProject.ProjectType);
                 }
             }
         }
