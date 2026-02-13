@@ -24,7 +24,6 @@ Darwing is making use of the following licensed projects:
 
 \- \[NSubstitute](https://nsubstitute.github.io/) project by Anthony Egerton,David Tchepak,Alexandr Nikitin,Oleksandr Povar under the \[BSD-3-clause license](https://licenses.nuget.org/BSD-3-Clause)
 
-&nbsp;
 
 \- \[LibGit2Sharp](https://github.com/libgit2/libgit2sharp) project under the \[MIT license](https://licenses.nuget.org/MIT)
 
