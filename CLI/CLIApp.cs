@@ -1,6 +1,5 @@
 using Core.IndustrialEstate;
 using Core.Interfaces;
-using Microsoft.CodeAnalysis.VisualBasic.Syntax;
 using Models;
 using Models.Enums;
 using Models.SharedInterfaces;
@@ -28,13 +27,14 @@ public class CLIApp
     private readonly ISolutionBuilder _solutionBuilder;
     private readonly IMutationRunInitiator _mutationRunInitiator;
     private readonly IMutationDiscoveryManager _mutationDiscoveryManager;
+    private readonly ISolutionProvider _solutionProvider;
     private readonly ICancellationTokenWrapper _cancelationToken;
 
 
     public CLIApp(IMutationSettings mutationSettings, IStatusTracker statusTracker,
         ICancelationTokenFactory cancelationTokenFactory, ISolutionLoader solutionLoader,
         ISolutionBuilder solutionBuilder, IMutationRunInitiator mutationRunInitiator, 
-        IMutationDiscoveryManager mutationDiscoveryManager)
+        IMutationDiscoveryManager mutationDiscoveryManager, ISolutionProvider solutionProvider)
     {
         ArgumentNullException.ThrowIfNull(mutationSettings);
         ArgumentNullException.ThrowIfNull(statusTracker);
@@ -49,6 +49,7 @@ public class CLIApp
         _solutionBuilder = solutionBuilder;
         _mutationRunInitiator = mutationRunInitiator;
         _mutationDiscoveryManager = mutationDiscoveryManager;
+        _solutionProvider = solutionProvider;
         _cancelationToken = cancelationTokenFactory.Generate();
     }
 
@@ -148,7 +149,7 @@ public class CLIApp
             response = $"'{LoadCommand}' command takes only 1 parameter, received with {commandParams.Length}.";
             return;
         }
-
+        
         string path = commandParams[0];
         _solutionLoader.Load(path);
     }
@@ -187,18 +188,21 @@ public class CLIApp
         PropertyInfo[] propertyInfos = typeof(IMutationSettings).GetProperties();
         foreach (string setting in commandParams)
         {
+            Log.Information("parsing setting override: {setting}", setting);
             string[] settingPair = setting.Split("=");
             if (settingPair.Length != 2)
             {
+                Log.Warning("Could not parse setting override: {setting}. Setting overrides should be in the format 'SettingName=SettingValue'", setting);
                 continue;
             }
             string settingName = settingPair[0];
             string settingStringValue = settingPair[1];
 
             //get the property corresponding to the setting name
-            PropertyInfo? propertyInfo = propertyInfos.FirstOrDefault(x => x.Name == settingPair.First());
+            PropertyInfo? propertyInfo = propertyInfos.FirstOrDefault(x => string.Equals(x.Name, settingPair.First(), StringComparison.CurrentCultureIgnoreCase));
             if (propertyInfo is null)
             {
+                Log.Warning("Could not find setting with name: {name}", settingName);
                 continue;
             }
 
@@ -207,6 +211,7 @@ public class CLIApp
                 object? parsedValue = ParseValue(settingStringValue, propertyInfo.PropertyType);
                 propertyInfo.SetValue(_mutationSettings, parsedValue);
                 Log.Information("overridden setting: {name}", settingName);
+                HandleProjectTypeSettingUpdate(propertyInfo.Name);
             }
             catch
             {
@@ -224,6 +229,28 @@ public class CLIApp
         Log.Information("Survived mutants: {SurvivedCount}", survivedCount);
 
         Log.Information("For more detailed reporting, use the --report command.");
+    }
+
+    private void HandleProjectTypeSettingUpdate(string settingName, List<string> newValues)
+    {
+        if (settingName is nameof(IMutationSettings.SourceCodeProjects) or nameof(IMutationSettings.TestProjects) or nameof(IMutationSettings.IgnoreProjects))
+        {
+            // If the project type settings have been updated, we need to update the project types for each project, as they are used to determine which mutators to apply to each project.
+            foreach (string projName in newValues)
+            {
+                if (_solutionProvider.SolutionContainer.AllProjects.FirstOrDefault(x => projName.ToLower() == x.Name.ToLower()) is { } changedProject)
+                {
+                    changedProject.ProjectType = (settingName) switch
+                    {
+                        nameof(IMutationSettings.TestProjects) => ProjectType.Test,
+                        nameof(IMutationSettings.SourceCodeProjects) => ProjectType.Source,
+                        nameof(IMutationSettings.IgnoreProjects) => ProjectType.Ignore, 
+                        _ => changedProject.ProjectType
+                    };
+                    Log.Information("Project {ProjectName} set to type Test", proj.Name);
+                }
+            }
+        }
     }
 
     private object? ParseValue(string value, Type targetType)
